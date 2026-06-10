@@ -5,6 +5,8 @@ $xmlFile = '/var/log/xlxd.xml';
 
 $stations = [];
 $peers = [];
+$nodes = [];
+$activeWindowSeconds = 120;
 
 if (is_readable($xmlFile)) {
     $raw = file_get_contents($xmlFile);
@@ -23,6 +25,25 @@ if (is_readable($xmlFile)) {
             'module' => trim($module[1] ?? ''),
             'peer' => trim($peer[1] ?? ''),
             'lastheard' => trim($lh[1] ?? '')
+        ];
+    }
+
+    preg_match_all('/<NODE>(.*?)<\/NODE>/s', $raw, $nodeBlocks);
+    foreach ($nodeBlocks[1] as $block) {
+        preg_match('/<Callsign>(.*?)<\/Callsign>/s', $block, $cs);
+        preg_match('/<LinkedModule>(.*?)<\/LinkedModule>/s', $block, $module);
+        preg_match('/<Protocol>(.*?)<\/Protocol>/s', $block, $proto);
+        preg_match('/<LastHeardTime>(.*?)<\/LastHeardTime>/s', $block, $lh);
+
+        $lastheard = trim($lh[1] ?? '');
+        $lastTs = $lastheard !== '' ? strtotime($lastheard) : 0;
+
+        $nodes[] = [
+            'callsign' => trim($cs[1] ?? ''),
+            'module' => trim($module[1] ?? ''),
+            'protocol' => trim($proto[1] ?? ''),
+            'lastheard' => $lastheard,
+            'active' => ($lastTs > 0 && (time() - $lastTs) <= $activeWindowSeconds)
         ];
     }
 
@@ -179,14 +200,36 @@ th,td{padding:10px;border-bottom:1px solid #2d425c;text-align:left;}
 
 <div class="card">
 <h2>Active Streams</h2>
-<div class="grid">
-<div class="badge">D-Star<br><span class="idle">0</span></div>
-<div class="badge">DMR<br><span class="idle">0</span></div>
-<div class="badge">YSF<br><span class="idle">0</span></div>
-<div class="badge">NXDN<br><span class="idle">0</span></div>
-<div class="badge">P25<br><span class="idle">0</span></div>
-<div class="badge">M17<br><span class="idle">0</span></div>
-</div>
+<table>
+<tr>
+<th>Callsign</th>
+<th>Protocol</th>
+<th>Module</th>
+<th>Last Heard</th>
+<th>Status</th>
+</tr>
+
+<?php
+$activeFound = false;
+foreach ($nodes as $node):
+    if (!$node['active']) continue;
+    $activeFound = true;
+?>
+<tr>
+<td><?= htmlspecialchars($node['callsign']) ?></td>
+<td><?= htmlspecialchars($node['protocol']) ?></td>
+<td><?= htmlspecialchars($node['module']) ?></td>
+<td><?= htmlspecialchars(nice_time($node['lastheard'])) ?></td>
+<td class="good">ACTIVE</td>
+</tr>
+<?php endforeach; ?>
+
+<?php if (!$activeFound): ?>
+<tr><td colspan="5" class="idle">No active streams detected.</td></tr>
+<?php endif; ?>
+
+</table>
+<p class="small">Active means node activity heard within the last <?= intval($activeWindowSeconds) ?> seconds.</p>
 </div>
 
 </main>
