@@ -305,12 +305,13 @@ bool CP25Protocol::IsValidDisconnectPacket(const CBuffer &Buffer, CCallsign *cal
 
 bool CP25Protocol::IsValidDvPacket(const CIp &Ip, const CBuffer &Buffer, std::unique_ptr<CDvFramePacket> &frame)
 {
-	if ( (Buffer.size() >= 14) )
-	{
-		int offset = 0;
-		bool last = false;
+	if ( Buffer.size() < 14 )
+		return false;
 
-		switch (Buffer.data()[0U]) {
+	int offset = -1;
+	bool last = false;
+
+	switch (Buffer.data()[0U]) {
 		case 0x62U:
 			offset = 10U;
 			break;
@@ -351,22 +352,30 @@ bool CP25Protocol::IsValidDvPacket(const CIp &Ip, const CBuffer &Buffer, std::un
 		case 0x73U:
 			offset = 4U;
 			break;
-		case 0x80U:
-			last = true;
-			m_uiStreamId = 0;
-			break;
-		default:
-			break;
-		}
-
-		frame = std::unique_ptr<CDvFramePacket>(new CDvFramePacket(&(Buffer.data()[offset]), m_uiStreamId, last));
-		return true;
+	case 0x80U:
+		last = true;
+		offset = 0U;
+		break;
+	default:
+		return false;
 	}
-	return false;
+
+	if ( offset < 0 || Buffer.size() < static_cast<size_t>(offset + 11U) )
+		return false;
+
+	frame = std::unique_ptr<CDvFramePacket>(new CDvFramePacket(&(Buffer.data()[offset]), m_uiStreamId, last));
+
+	if ( last )
+		m_uiStreamId = 0;
+
+	return true;
 }
 
 bool CP25Protocol::IsValidDvHeaderPacket(const CIp &Ip, const CBuffer &Buffer, std::unique_ptr<CDvHeaderPacket> &header)
 {
+	if ( Buffer.size() < 4 )
+		return false;
+
 	if(Buffer.data()[0] == 0x66){
 		auto stream = GetStream(m_uiStreamId, &Ip);
 		if ( !stream )
