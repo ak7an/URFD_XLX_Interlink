@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+import csv
+import sqlite3
+import sys
+from pathlib import Path
+
+DB = Path("/var/lib/urfd-dashboard/radioid.sqlite")
+
+def pick(row, names):
+    lower = {k.strip().lower(): v for k, v in row.items() if k}
+    for name in names:
+        if name.lower() in lower:
+            return (lower[name.lower()] or "").strip()
+    return ""
+
+def import_semicolon_simple(cur, protocol, path):
+    count = 0
+    skipped = 0
+
+    with path.open("r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+
+            parts = line.split(";")
+            if len(parts) < 2:
+                skipped += 1
+                continue
+
+            rid = parts[0].strip()
+            callsign = parts[1].strip().upper()
+
+            if not rid or not callsign:
+                skipped += 1
+                continue
+
+            try:
+                rid_int = int(rid)
+            except ValueError:
+                skipped += 1
+                continue
+
+            cur.execute("""
+                INSERT INTO radioid
+                (id, callsign, protocol, source, updated_at)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET
+                    callsign=excluded.callsign,
+                    protocol=excluded.protocol,
+                    source=excluded.source,
+                    updated_at=CURRENT_TIMESTAMP
+            """, (rid_int, callsign, protocol, str(path)))
+            count += 1
+
+    return count, skipped
+
+def import_csv(cur, protocol, path):
+    count = 0
+    skipped = 0
+
+    with path.open("r", encoding="utf-8", errors="replace", newline="") as f:
+        sample = f.read(4096)
+        f.seek(0)
+
+        dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
+        reader = csv.DictReader(f, dialect=dialect)
+
+        for row in reader:
+            rid = pick(row, ["id", "radio_id", "radio id", "radioid", "dmrid", "dmr id", "nxdn id", "p25 id"])
+            callsign = pick(row, ["callsign", "call", "call sign"])
+
+            if not rid or not callsign:
+                skipped += 1
+                continue
+
+            try:
+                rid_int = int(rid)
+            except ValueError:
+                skipped += 1
+                continue
+
+            first = pick(row, ["first_name", "first name", "firstname", "fname", "first"])
+            last = pick(row, ["last_name", "last name", "lastname", "lname", "last", "surname"])
+            city = pick(row, ["city", "town"])
+            state = pick(row, ["state", "province", "region"])
+            country = pick(row, ["country"])
+
+            cur.execute("""
+                INSERT INTO radioid
+                (id, callsign, first_name, last_name, city, state, country, protocol, source, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET
+                    callsign=excluded.callsign,
+                    first_name=excluded.first_name,
+                    last_name=excluded.last_name,
+                    city=excluded.city,
+                    state=excluded.state,
+                    country=excluded.country,
+                    protocol=excluded.protocol,
+                    source=excluded.source,
+                    updated_at=CURRENT_TIMESTAMP
+            """, (
+                rid_int,
+                callsign.upper(),
+                first,
+                last,
+                city,
+                state,
+                country,
+                protocol,
+                str(path)
+            ))
+
+            count += 1
+
+    return count, skipped
+
+def main():
+    if len(sys.argv) < 3:
+        print("Usage: urfd-radioid-import <protocol> <file>")
+        sys.exit(1)
+
+    protocol = sys.argv[1].upper()
+    path = Path(sys.argv[2])
+
+    if not path.exists():
+        print(f"ERROR: file not found: {path}")
+        sys.exit(1)
+
+    conn = sqlite3.connect(DB)
+    cur = conn.cursor()
+
+    first_line = path.open("r", encoding="utf-8", errors="replace").readline()
+
+    if ";" in first_line and "," not in first_line:
+        count, skipped = import_semicolon_simple(cur, protocol, path)
+    else:
+        count, skipped = import_csv(cur, protocol, path)
+
+    conn.commit()
+    conn.close()
+
+    print(f"Imported {count} records for {protocol}")
+    print(f"Skipped {skipped} rows")
+
+if __name__ == "__main__":
+    main()

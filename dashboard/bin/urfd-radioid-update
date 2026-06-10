@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CONF="/etc/urfd-dashboard/radioid.conf"
+DATA_DIR="/var/lib/urfd-dashboard"
+DOWNLOAD_DIR="$DATA_DIR/downloads"
+IMPORTER="/usr/local/bin/urfd-radioid-import"
+
+mkdir -p "$DOWNLOAD_DIR"
+
+if [ ! -f "$CONF" ]; then
+    echo "ERROR: missing config: $CONF"
+    echo "Create it from /etc/urfd-dashboard/radioid.conf.example"
+    exit 1
+fi
+
+# shellcheck disable=SC1090
+source "$CONF"
+
+download_and_import() {
+    local proto="$1"
+    local url="$2"
+    local outfile="$DOWNLOAD_DIR/${proto,,}.csv"
+
+    if [ -z "$url" ]; then
+        echo "Skipping $proto: no URL configured"
+        return 0
+    fi
+
+    echo "Downloading $proto from $url"
+    curl -fsSL "$url" -o "$outfile.tmp"
+    mv "$outfile.tmp" "$outfile"
+
+    echo "Importing $proto"
+    "$IMPORTER" "$proto" "$outfile"
+}
+
+download_and_import "DMR"  "${DMR_URL:-}"
+download_and_import "NXDN" "${NXDN_URL:-}"
+download_and_import "P25"  "${P25_URL:-}"
+
+echo
+echo "RadioID database counts:"
+sqlite3 "$DATA_DIR/radioid.sqlite" \
+"SELECT protocol, COUNT(*) FROM radioid GROUP BY protocol ORDER BY protocol;"
+
+chown -R ed:www-data "$DATA_DIR" 2>/dev/null || chown -R www-data:www-data "$DATA_DIR"
+chmod -R g+rw "$DATA_DIR"
+
+echo "RadioID update complete"
