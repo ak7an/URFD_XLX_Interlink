@@ -577,3 +577,94 @@ Next:
 - Next item
 - Next item
 
+
+---
+
+## Dashboard and Deployment Framework Milestone
+
+Date:
+2026-06-10
+
+Major accomplishment:
+
+Project focus expanded from reflector functionality
+to deployment and sysop usability.
+
+Dashboard progress:
+
+- New dashboard deployed at /urfd/
+- Separate sysop dashboard deployed at /urfd/sysop/
+- Dashboard now reads live reflector data from /var/log/xlxd.xml
+- Public dashboard layout finalized:
+  - Last Heard
+  - Connected Nodes
+  - Linked Systems
+- Protocol online/offline status indicators added
+- Sysop dashboard displays:
+  - URFD/TCD service status
+  - Reflector uptime
+  - Server uptime
+  - CPU load
+  - CPU temperature
+  - Memory usage
+  - Disk usage
+
+RadioID / Lookup subsystem:
+
+- SQLite database framework created
+- radioid.sqlite stored under /var/lib/urfd-dashboard/
+- DMR import validated:
+  - 322,450 records imported
+- NXDN import validated:
+  - 16,441 records imported
+- Total lookup database:
+  - 338,891 records
+
+Lookup validation:
+
+AK7AN successfully resolved from database.
+
+Deployment framework:
+
+Added:
+
+- scripts/setup-radioid-db.sh
+- scripts/install-radioid-tools.sh
+- scripts/install-radioid-timer.sh
+- scripts/check-install.sh
+- scripts/configure-reflector.sh
+
+Validation system:
+
+check-install.sh successfully validates:
+
+- URFD
+- TCD
+- Apache2
+- PHP
+- SQLite3
+- Dashboard
+- HTTPS
+- XML status feed
+- RadioID database
+- RadioID updater
+
+Current validation result:
+
+PASS: 26
+WARN: 0
+FAIL: 0
+
+Project direction:
+
+Goal is now a deployable reflector package
+that can be installed and configured by a new sysop
+with minimal manual intervention.
+
+Planned:
+
+- install-all.sh master installer
+- automatic RadioID update integration
+- dashboard callsign enrichment using SQLite lookup data
+- continued URFD/XLX interlink improvements
+
