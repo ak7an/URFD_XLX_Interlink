@@ -72,6 +72,11 @@ function nice_time($zulu)
 function lookup_operator($callsign)
 {
     $callsign = strtoupper(trim($callsign));
+
+    // Normalize D-Star style callsigns like "AK7AN / ID31" before RadioID lookup.
+    if (strpos($callsign, '/') !== false) {
+        $callsign = trim(explode('/', $callsign, 2)[0]);
+    }
     if ($callsign === '') return '';
 
     $dbFile = '/var/lib/urfd-dashboard/radioid.sqlite';
