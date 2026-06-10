@@ -5,3 +5,24 @@ reflector/urfd.*
 urfd
 inicheck
 dbutil
+
+# Local backups
+*.bak
+*.bak.*
+*.bak.lastheard20
+
+# Runtime logs and generated status
+*.log
+reflector/xml/
+reflector/reflector.log
+
+# Runtime lookup/test data
+reflector/dmrid.dat
+reflector/nxdn.dat
+reflector/ysfnode.dat
+reflector/ysf_link.txt
+reflector/ysf_test.dat
+
+# Local helper scripts / accidental pasted files
+reflector/update_reflector.sh
+ter section ====="
