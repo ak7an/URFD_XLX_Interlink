@@ -478,3 +478,102 @@ Status:
 
 Dashboard phase started successfully.
 
+
+---
+
+## Deployment and Installation Philosophy
+
+Date:
+2026-06-10
+
+Project goal:
+
+A new sysop should be able to deploy URFD_XLX_Interlink with minimal manual intervention.
+
+Target installation workflow:
+
+git clone
+configure
+install
+run
+
+The project should not require a sysop to manually discover:
+
+- package dependencies
+- Apache configuration
+- PHP modules
+- SQLite requirements
+- dashboard permissions
+- service permissions
+- filesystem ownership requirements
+- RadioID database setup
+- dashboard installation paths
+
+Future development shall favor:
+
+- automated installers
+- setup scripts
+- dependency validation
+- installation verification
+
+Planned installation scripts:
+
+scripts/install-deps.sh
+scripts/install-dashboard.sh
+scripts/setup-radioid-db.sh
+scripts/install-service.sh
+scripts/check-install.sh
+
+Expected dependency coverage:
+
+- URFD
+- TCD
+- Apache2
+- PHP
+- PHP SQLite support
+- SQLite3
+- Dashboard files
+- Dashboard permissions
+- RadioID database
+- Systemd services
+- HTTPS support
+
+Expected validation coverage:
+
+[PASS] URFD present
+[PASS] TCD present
+[PASS] Apache2 running
+[PASS] PHP SQLite available
+[PASS] Dashboard installed
+[PASS] RadioID database present
+[PASS] XML status readable
+[PASS] Service installed
+[PASS] HTTPS configured
+
+Long-term objective:
+
+Reduce installation effort from hours of troubleshooting to a repeatable scripted deployment.
+
+
+---
+
+## New Checkpoint Title
+
+Date:
+2026-06-10
+
+Summary:
+
+- Item
+- Item
+- Item
+
+Status:
+
+Current state here.
+
+Next:
+
+- Next item
+- Next item
+
