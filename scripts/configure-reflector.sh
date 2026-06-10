@@ -13,12 +13,6 @@ ask() {
     echo "${value:-$default}"
 }
 
-replace_key() {
-    local key="$1"
-    local value="$2"
-    perl -0pi -e "s/^(${key}\s*=\s*).*\$/\${1}${value}/m" "$OUT"
-}
-
 echo "===== URFD_XLX_Interlink Guided Configurator ====="
 echo
 echo "This creates:"
@@ -26,8 +20,6 @@ echo "  $OUT"
 echo
 echo "It does NOT overwrite your live urfd.ini."
 echo
-
-cp "$SRC" "$OUT"
 
 REF_NUM="$(ask "Reflector number" "277")"
 CALLSIGN="$(ask "Reflector callsign" "URF${REF_NUM}")"
@@ -38,31 +30,55 @@ DASHBOARD_URL="$(ask "Dashboard URL" "https://xlx${REF_NUM}.example.com")"
 EXTERNAL_IP="$(ask "External IPv4 address" "0.0.0.0")"
 MODULES="$(ask "Enabled modules" "A")"
 TRANSCODE_MODULES="$(ask "Transcoded module(s)" "A")"
-
 NXDN_ID="$(ask "NXDN Reflector ID / TG" "21277")"
 P25_ID="$(ask "P25 Reflector ID / TG" "21277")"
 YSF_ID="$(ask "YSF Registration ID" "21277")"
 YSF_NAME="$(ask "YSF Registration Name" "US URF${REF_NUM}")"
 
-echo
-echo "Writing generated config..."
+python3 - "$SRC" "$OUT" <<PY
+from pathlib import Path
+import sys
 
-replace_key "Callsign" "$CALLSIGN     # where ? is A-Z or 0-9. NO EXCEPTIONS!"
-replace_key "SysopEmail" "$SYSOP_EMAIL"
-replace_key "Country" "$COUNTRY"
-replace_key "Sponsor" "$SPONSOR"
-replace_key "DashboardUrl" "$DASHBOARD_URL"
-replace_key "IPv4External" "$EXTERNAL_IP"
-replace_key "Modules" "$MODULES"
-replace_key "DescriptionA" "All Modes"
+src = Path(sys.argv[1])
+out = Path(sys.argv[2])
 
-# Transcoder section Modules is the second Modules key, so handle by section.
-perl -0pi -e "s/(\[Transcoder\].*?Modules\s*=\s*).*/\${1}${TRANSCODE_MODULES} # Transcoded modules one or three modules, depending on the hardware/s" "$OUT"
+values = {
+    ("Names", "Callsign"): "${CALLSIGN}     # where ? is A-Z or 0-9. NO EXCEPTIONS!",
+    ("Names", "SysopEmail"): "${SYSOP_EMAIL}",
+    ("Names", "Country"): "${COUNTRY}",
+    ("Names", "Sponsor"): "${SPONSOR}",
+    ("Names", "DashboardUrl"): "${DASHBOARD_URL}",
+    ("IP Addresses", "IPv4External"): "${EXTERNAL_IP}",
+    ("Modules", "Modules"): "${MODULES}",
+    ("Modules", "DescriptionA"): "All Modes",
+    ("Transcoder", "Modules"): "${TRANSCODE_MODULES} # Transcoded modules one or three modules, depending on the hardware",
+    ("NXDN", "ReflectorID"): "${NXDN_ID}",
+    ("P25", "ReflectorID"): "${P25_ID}",
+    ("YSF", "RegistrationID"): "${YSF_ID}",
+    ("YSF", "RegistrationName"): "${YSF_NAME}",
+}
 
-perl -0pi -e "s/(\[NXDN\].*?ReflectorID\s*=\s*).*/\${1}${NXDN_ID}/s" "$OUT"
-perl -0pi -e "s/(\[P25\].*?ReflectorID\s*=\s*).*/\${1}${P25_ID}/s" "$OUT"
-perl -0pi -e "s/(\[YSF\].*?RegistrationID\s*=\s*).*/\${1}${YSF_ID}/s" "$OUT"
-perl -0pi -e "s/(\[YSF\].*?RegistrationName\s*=\s*).*/\${1}${YSF_NAME}/s" "$OUT"
+section = None
+new_lines = []
+
+for line in src.read_text().splitlines():
+    stripped = line.strip()
+
+    if stripped.startswith("[") and stripped.endswith("]"):
+        section = stripped[1:-1]
+        new_lines.append(line)
+        continue
+
+    if "=" in line and section:
+        key = line.split("=", 1)[0].strip()
+        if (section, key) in values:
+            prefix = line.split("=", 1)[0]
+            line = f"{prefix}= {values[(section, key)]}"
+
+    new_lines.append(line)
+
+out.write_text("\\n".join(new_lines) + "\\n")
+PY
 
 echo
 echo "[PASS] Generated: $OUT"
