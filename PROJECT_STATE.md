@@ -423,3 +423,58 @@ Overall Status:
 
 Stable production reflector ready for dashboard development phase.
 
+
+---
+
+## Dashboard Development Checkpoint
+
+Date:
+2026-06-10
+
+New dashboard path:
+
+https://xlx277.bitbybithams.com/urfd/
+
+Sysop dashboard path:
+
+https://xlx277.bitbybithams.com/urfd/sysop/
+
+Architecture:
+
+- New dashboard is separate from the stock URFD dashboard
+- Stock dashboard remains at /urf/
+- New dashboard files are under /var/www/html/urf/urfd/
+- Dashboard reads live status from /var/log/xlxd.xml
+- No URFD/TCD packet-path changes required for dashboard display
+
+Public dashboard now includes:
+
+- Reflector online/stale/offline status
+- Protocol status cards
+- Last Heard table
+- Connected Nodes table
+- Linked Systems table
+- Active Streams placeholder
+
+Sysop dashboard now includes:
+
+- URFD/TCD service status
+- Reflector uptime
+- Running-since timestamp
+- Server uptime
+- CPU load
+- CPU temperature from coretemp sensor
+- Memory usage
+- Disk usage
+
+Last Heard:
+
+- URFD internal last-heard cap increased
+- LASTHEARD_USERS_MAX_SIZE changed from 20 to 40
+- Trim logic corrected to keep up to LASTHEARD_USERS_MAX_SIZE entries
+- Public dashboard displays up to 20 Last Heard entries
+
+Status:
+
+Dashboard phase started successfully.
+

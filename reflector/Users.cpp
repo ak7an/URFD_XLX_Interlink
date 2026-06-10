@@ -28,16 +28,16 @@ CUsers::CUsers() {}
 ////////////////////////////////////////////////////////////////////////////////////////
 // users management
 
-#define LASTHEARD_USERS_MAX_SIZE 20
+#define LASTHEARD_USERS_MAX_SIZE 40
 void CUsers::AddUser(const CUser &user)
 {
 	// add
 	m_Users.push_front(user);
 
 	// if list size too big, remove oldest
-	if ( m_Users.size() >= (LASTHEARD_USERS_MAX_SIZE-1) )
+	if ( m_Users.size() > LASTHEARD_USERS_MAX_SIZE )
 	{
-		m_Users.resize(m_Users.size()-1);
+		m_Users.resize(LASTHEARD_USERS_MAX_SIZE);
 	}
 }
 
