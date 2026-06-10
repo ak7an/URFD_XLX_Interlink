@@ -668,3 +668,154 @@ Planned:
 - dashboard callsign enrichment using SQLite lookup data
 - continued URFD/XLX interlink improvements
 
+
+---
+
+## Checkpoint: Deployment Framework and Custom Dashboard Enhancements
+
+Date: 2026-06-10
+
+### Deployment Framework
+
+Completed deployment framework for new sysop installations.
+
+Added:
+
+- install-all.sh
+- scripts/install-deps.sh
+- scripts/install-dashboard.sh
+- scripts/setup-radioid-db.sh
+- scripts/install-radioid-tools.sh
+- scripts/install-radioid-timer.sh
+- scripts/configure-reflector.sh
+- scripts/check-install.sh
+
+Validation:
+
+- Shell syntax checks passed
+- Installer framework committed
+- Deployment framework committed to main
+
+Commit:
+
+- 3d10075 Add deployment installer framework
+
+### Dashboard Direction Clarification
+
+Important project decision:
+
+The project is NOT modifying or extending the original XLXD dashboard.
+
+Development is focused on the new custom URFD dashboard located at:
+
+    dashboard/index.php
+    dashboard/sysop/index.php
+
+The legacy XLXD dashboard code remains present in the repository for reference and compatibility purposes but is not the primary development target.
+
+Future dashboard work should be performed against the custom dashboard unless a specific reason exists to modify the legacy dashboard.
+
+### Public Dashboard Improvements
+
+Added operator name enrichment using RadioID SQLite lookups.
+
+Last Heard now displays:
+
+- Callsign
+- Operator Name
+- Via Node
+- Module
+- Via Peer
+
+Commit:
+
+- ec82dc6 Add operator names to public last heard
+
+### Active Streams Section
+
+Original placeholder:
+
+- D-Star 0
+- DMR 0
+- YSF 0
+- NXDN 0
+- P25 0
+- M17 0
+
+Replaced with recent activity view using XML node information.
+
+Current implementation:
+
+- Parses NODE entries from xlxd.xml
+- Displays recent node activity
+- Uses LastHeardTime
+- Active window = 120 seconds
+
+Current limitation:
+
+The XML feed does not expose actual stream lifecycle information.
+
+Current display is therefore:
+
+"Recent Node Activity"
+
+rather than true active transcoding streams.
+
+Future enhancement:
+
+Add native URFD XML reporting for active streams including:
+
+- Callsign
+- Protocol
+- Module
+- Start Time
+- Duration
+
+Commit:
+
+- 4bd45e2 Show recent active node streams on dashboard
+
+### Automatic Dashboard Refresh
+
+Added automatic browser refresh.
+
+Current refresh interval:
+
+- 30 seconds
+
+Implementation:
+
+<meta http-equiv="refresh" content="30">
+
+Commit:
+
+- 9496f45 Add public dashboard auto refresh
+
+### RadioID Integration Status
+
+SQLite database operational.
+
+Validated:
+
+- DMR import
+- NXDN import
+- 338,891 records loaded
+
+Dashboard currently uses RadioID database for:
+
+- Operator name enrichment
+
+Future possibilities:
+
+- Sysop city/state display
+- Numeric ID display
+- Protocol-specific lookup tools
+
+### Current Priorities
+
+1. Complete install-all.sh deployment workflow
+2. Improve RadioID automation and maintenance
+3. Expand custom dashboard functionality
+4. Enhance URFD/XLX interlink operation
+5. Investigate true active stream reporting from URFD
+
