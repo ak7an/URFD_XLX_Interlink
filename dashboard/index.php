@@ -104,6 +104,7 @@ function lookup_operator($callsign)
 <meta charset="utf-8">
 <title>URF277 Public Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="30">
 
 <style>
 body{background:#0b1118;color:#ffffff;font-family:Arial,sans-serif;margin:0;}
