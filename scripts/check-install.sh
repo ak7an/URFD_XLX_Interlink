@@ -44,10 +44,9 @@ check_cmd() {
 echo "===== URFD_XLX_Interlink Install Check ====="
 echo
 
-check_file "URFD binary" "/home/ed/urfd/reflector/urfd"
-check_file "URFD config" "/home/ed/urfd/reflector/urfd.ini"
+check_file "URFD binary" "/usr/local/bin/urfd"
 check_file "TCD binary" "/usr/local/bin/tcd"
-check_file "TCD config" "/home/ed/tcd/tcd.ini"
+check_file "URFD/TCD launcher" "/usr/local/bin/start-urfd-tcd.sh"
 
 echo
 echo "===== Services ====="
@@ -73,6 +72,8 @@ fi
 echo
 echo "===== Dependencies ====="
 
+check_cmd "URFD" "urfd"
+check_cmd "TCD" "tcd"
 check_cmd "Apache2" "apache2"
 check_cmd "PHP" "php"
 check_cmd "SQLite3" "sqlite3"
