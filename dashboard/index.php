@@ -48,6 +48,34 @@ function nice_time($zulu)
     return date('Y-m-d H:i', $ts);
 }
 
+function lookup_operator($callsign)
+{
+    $callsign = strtoupper(trim($callsign));
+    if ($callsign === '') return '';
+
+    $dbFile = '/var/lib/urfd-dashboard/radioid.sqlite';
+    if (!is_readable($dbFile)) return '';
+
+    try {
+        $db = new SQLite3($dbFile, SQLITE3_OPEN_READONLY);
+        $stmt = $db->prepare(
+            "SELECT first_name, last_name
+             FROM radioid
+             WHERE UPPER(callsign) = :callsign
+             LIMIT 1"
+        );
+        $stmt->bindValue(':callsign', $callsign, SQLITE3_TEXT);
+        $row = $stmt->execute()->fetchArray(SQLITE3_ASSOC);
+        $db->close();
+
+        if (!$row) return '';
+
+        return trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
+    } catch (Exception $e) {
+        return '';
+    }
+}
+
 ?>
 <!doctype html>
 <html>
@@ -125,6 +153,7 @@ th,td{padding:10px;border-bottom:1px solid #2d425c;text-align:left;}
 <tr>
 <th>Time</th>
 <th>Callsign</th>
+<th>Operator</th>
 <th>Via Node</th>
 <th>Module</th>
 <th>Via Peer</th>
@@ -135,13 +164,14 @@ th,td{padding:10px;border-bottom:1px solid #2d425c;text-align:left;}
 <tr>
 <td><?= htmlspecialchars(nice_time($st['lastheard'])) ?></td>
 <td><?= htmlspecialchars($st['callsign']) ?></td>
+<td><?= htmlspecialchars(lookup_operator($st['callsign'])) ?></td>
 <td><?= htmlspecialchars($st['via']) ?></td>
 <td><?= htmlspecialchars($st['module']) ?></td>
 <td><?= htmlspecialchars($st['peer']) ?></td>
 </tr>
 <?php endforeach; ?>
 <?php else: ?>
-<tr><td colspan="5" class="idle">No last-heard stations found.</td></tr>
+<tr><td colspan="6" class="idle">No last-heard stations found.</td></tr>
 <?php endif; ?>
 
 </table>
