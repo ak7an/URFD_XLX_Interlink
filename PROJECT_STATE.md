@@ -1339,3 +1339,235 @@ Framework implemented.
 
 Pending live validation against XLX API.
 
+
+---
+
+## XLX Calling Home Integration Completed
+
+Date: 2026-06-11
+
+Goal:
+
+Implement XLXD-compatible Calling Home support for URFD_XLX_Interlink while preserving compatibility with existing XLX directory listings and host-file generation.
+
+Implementation:
+
+Added:
+
+- dashboard/bin/urfd-callinghome
+- scripts/install-callinghome-timer.sh
+
+Installer integration:
+
+- install-dashboard.sh now installs:
+  - /usr/local/bin/urfd-callinghome
+
+- install-all.sh now installs:
+  - Calling Home timer/service
+
+Dashboard configuration:
+
+Added support for:
+
+- CALLING_HOME_ENABLED
+- CALLING_HOME_DASHBOARD_URL
+- CALLING_HOME_API_URL
+- CALLING_HOME_COUNTRY
+- CALLING_HOME_COMMENT
+- CALLING_HOME_OVERRIDE_IP
+- CALLING_HOME_INTERLINK_FILE
+- CALLING_HOME_HASH_FILE
+- CALLING_HOME_LAST_FILE
+
+Hash handling:
+
+New installations:
+
+- Generate new random Calling Home hash
+
+Legacy XLXD upgrades:
+
+- Detect:
+  /xlxd-ch/callinghome.php
+
+- Offer sysop option to reuse existing hash
+
+Purpose:
+
+- Preserve existing XLX directory identity
+- Avoid 72-hour stale listing timeout
+- Allow seamless XLXD -> URFD migration
+
+Active system validation:
+
+Legacy hash imported:
+
+    09pHYL2xfik6uDAX
+
+Stored at:
+
+    /var/lib/urfd/callinghome.hash
+
+Permissions:
+
+    root:root
+    0600
+
+Calling Home publisher validated:
+
+    [PASS] XLX Calling Home published: URF277
+
+Timer:
+
+    urfd-callinghome.timer
+
+Publishing interval:
+
+    Every 10 minutes
+
+Dashboard visibility:
+
+Sysop dashboard now displays:
+
+- Calling Home enabled/disabled state
+- Timer state
+- Hash file protection status
+- Hash file path
+- Last successful publish timestamp
+- Interlink file status
+
+Apache/dashboard cleanup:
+
+Public dashboard moved to root URL.
+
+Previous:
+
+    https://xlx277.bitbybithams.com/urfd/
+
+Current:
+
+    https://xlx277.bitbybithams.com/
+
+Sysop dashboard:
+
+    https://xlx277.bitbybithams.com/sysop/
+
+Apache DocumentRoot:
+
+    /var/www/html/urf/urfd
+
+Calling Home interlink file:
+
+Moved from development path:
+
+    /home/ed/urfd/reflector/urfd.interlink
+
+To deployment path:
+
+    /usr/local/etc/urfd.interlink
+
+Reason:
+
+- Readable by www-data
+- Suitable for production deployment
+- Matches installer expectations
+
+Current status:
+
+Calling Home framework complete and operational.
+
+Validation:
+
+- Publisher functional
+- Timer functional
+- Dashboard integration functional
+- Legacy hash migration functional
+- XLXD API compatibility retained
+
+Commit history:
+
+0b6a392 Add XLX Calling Home integration framework
+81ecaf4 Fix Calling Home reflector identity parsing
+749275e Show XLX Calling Home status on sysop dashboard
+
+---
+
+## RadioID Importer Enhancement
+
+Date: 2026-06-11
+
+Issue:
+
+Operator names were not appearing for some DMR users.
+
+Example:
+
+    K4MMG
+
+Dashboard showed:
+
+    Callsign present
+    Operator blank
+
+Investigation:
+
+RadioID SQLite contained:
+
+    DMR | 3185130 | K4MMG
+
+But:
+
+    first_name = NULL
+    last_name  = NULL
+
+Source file:
+
+    /var/lib/mmdvm/DMRIds.dat
+
+Contained:
+
+    3185130 K4MMG Rick
+
+Root cause:
+
+urfd-radioid-import only supported:
+
+- CSV
+- Semicolon-delimited records
+
+DMRIds.dat uses whitespace-delimited format.
+
+Fix:
+
+Added:
+
+    import_whitespace_simple()
+
+Importer now detects:
+
+    <id> <callsign> <name>
+
+and imports:
+
+- callsign
+- first_name
+- last_name
+
+Validation:
+
+Before:
+
+    DMR|3185130|K4MMG||
+
+After:
+
+    DMR|3185130|K4MMG|Rick|
+
+Result:
+
+Public dashboard now correctly displays operator names for DMR users sourced from DMRIds.dat.
+
+Commit:
+
+fe3a17c Parse whitespace DMR ID files with operator names
+
