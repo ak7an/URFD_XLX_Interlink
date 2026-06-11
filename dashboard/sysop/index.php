@@ -56,13 +56,10 @@ function udp_listener_state($port)
     return "inactive";
 }
 
-function tcp_listener_state($port)
+function process_state($pattern)
 {
-    $ss = shell_exec("ss -H -ltn 2>/dev/null");
-    if ($ss && preg_match('/[:.]' . preg_quote((string)$port, '/') . '\s/', $ss)) {
-        return "active";
-    }
-    return "inactive";
+    $cmd = "pgrep -f " . escapeshellarg($pattern) . " >/dev/null 2>&1 && echo active || echo inactive";
+    return trim(shell_exec($cmd));
 }
 
 function dvsi_dongle_count()
@@ -82,8 +79,8 @@ $hostname = gethostname();
 $time = date('Y-m-d H:i:s T');
 
 $combinedState = service_state($combinedSvc);
-$urfdState = tcp_listener_state(10100);
-$tcdState = $combinedState;
+$urfdState = process_state('/home/ed/urfd/reflector/urfd');
+$tcdState = process_state('/usr/local/bin/tcd');
 
 $reflectorSince = service_running_since($combinedSvc);
 $reflectorUptime = service_uptime($combinedSvc);
@@ -144,7 +141,9 @@ th{border-bottom:1px solid #2d425c;}
 <tr><td>URFD Service State</td><td class="<?= state_class($urfdState) ?>"><?= htmlspecialchars($urfdState) ?></td></tr>
 <tr><td>TCD Service State</td><td class="<?= state_class($tcdState) ?>"><?= htmlspecialchars($tcdState) ?></td></tr>
 <tr><td>Transcoder Status</td><td class="<?= state_class($transcoderStatus) ?>"><?= htmlspecialchars($transcoderStatus) ?></td></tr>
-<tr><td>DVSI Dongle Status</td><td class="<?= state_class($dvsiStatus) ?>"><?= htmlspecialchars($dvsiStatus . " (" . $dvsiCount . ")") ?></td></tr>
+<tr><td>DVSI Dongles Detected</td><td class="<?= state_class($dvsiStatus) ?>"><?= htmlspecialchars($dvsiCount . " detected") ?></td></tr>
+<tr><td>D-Star Dongle</td><td class="<?= $dvsiCount >= 1 ? 'good' : 'bad' ?>"><?= htmlspecialchars($dvsiCount >= 1 ? 'present' : 'missing') ?></td></tr>
+<tr><td>DMR/YSF Dongle</td><td class="<?= $dvsiCount >= 2 ? 'good' : 'bad' ?>"><?= htmlspecialchars($dvsiCount >= 2 ? 'present' : 'missing') ?></td></tr>
 <tr><td>Reflector Uptime</td><td><?= htmlspecialchars($reflectorUptime) ?></td></tr>
 <tr><td>Running Since</td><td><?= htmlspecialchars($reflectorSince) ?></td></tr>
 </table>
