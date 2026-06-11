@@ -2,7 +2,8 @@
 
 function service_state($svc)
 {
-    return trim(shell_exec("systemctl is-active " . escapeshellarg($svc) . " 2>/dev/null"));
+    $state = trim(shell_exec("systemctl is-active " . escapeshellarg($svc) . " 2>/dev/null"));
+    return $state !== "" ? $state : "unavailable";
 }
 
 function service_running_since($svc)
@@ -46,14 +47,62 @@ function cpu_temp()
     return $temp !== "" ? $temp : "Unavailable";
 }
 
-$svc = 'urfd-tcd.service';
+function udp_listener_state($port)
+{
+    $ss = shell_exec("ss -H -lun 2>/dev/null");
+    if ($ss && preg_match('/[:.]' . preg_quote((string)$port, '/') . '\s/', $ss)) {
+        return "active";
+    }
+    return "inactive";
+}
+
+function tcp_listener_state($port)
+{
+    $ss = shell_exec("ss -H -ltn 2>/dev/null");
+    if ($ss && preg_match('/[:.]' . preg_quote((string)$port, '/') . '\s/', $ss)) {
+        return "active";
+    }
+    return "inactive";
+}
+
+function dvsi_dongle_count()
+{
+    $out = trim(shell_exec("lsusb 2>/dev/null | grep -ci '0403:6015\\|DVSI\\|ThumbDV\\|Future Technology Devices'"));
+    return is_numeric($out) ? intval($out) : 0;
+}
+
+function state_class($state)
+{
+    return ($state === "active" || $state === "ready" || $state === "online") ? "good" : "bad";
+}
+
+$combinedSvc = 'urfd-tcd.service';
 
 $hostname = gethostname();
 $time = date('Y-m-d H:i:s T');
 
-$urfd = service_state($svc);
-$reflectorSince = service_running_since($svc);
-$reflectorUptime = service_uptime($svc);
+$combinedState = service_state($combinedSvc);
+$urfdState = tcp_listener_state(10100);
+$tcdState = $combinedState;
+
+$reflectorSince = service_running_since($combinedSvc);
+$reflectorUptime = service_uptime($combinedSvc);
+
+$dvsiCount = dvsi_dongle_count();
+$dvsiStatus = $dvsiCount > 0 ? "ready" : "not found";
+$transcoderStatus = ($combinedState === "active" && $dvsiCount > 0) ? "ready" : "not ready";
+
+$protocols = [
+    ["DPlus", 20001],
+    ["DExtra", 30001],
+    ["DCS", 30051],
+    ["DMR MMDVM", 62030],
+    ["NXDN", 41400],
+    ["YSF", 42000],
+    ["P25", 41000],
+    ["M17", 17000],
+    ["XLX Interlink", 10002],
+];
 
 $serverUptime = trim(shell_exec("uptime -p"));
 $load = sys_getloadavg();
@@ -67,16 +116,17 @@ $cpuTemp = cpu_temp();
 <html>
 <head>
 <meta charset="utf-8">
-<title>URF277 Dashboard</title>
+<title>URF277 Sysop Dashboard</title>
 <style>
 body{background:#0b1118;color:#fff;font-family:Arial,sans-serif;margin:0;}
 header{background:#162231;padding:20px;}
 main{padding:20px;}
 .card{background:#162231;border:1px solid #2d425c;border-radius:10px;padding:20px;margin-bottom:20px;max-width:900px;}
-.good{color:#66ff66;}
-.bad{color:#ff6666;}
+.good{color:#66ff66;font-weight:bold;}
+.bad{color:#ff6666;font-weight:bold;}
 table{border-collapse:collapse;}
-td{padding:8px 15px;}
+td,th{padding:8px 15px;text-align:left;}
+th{border-bottom:1px solid #2d425c;}
 </style>
 </head>
 <body>
@@ -90,9 +140,28 @@ td{padding:8px 15px;}
 <div class="card">
 <h2>Reflector Status</h2>
 <table>
-<tr><td>URFD/TCD Service</td><td class="<?=($urfd=='active')?'good':'bad'?>"><?= htmlspecialchars($urfd) ?></td></tr>
+<tr><td>URFD/TCD Service</td><td class="<?= state_class($combinedState) ?>"><?= htmlspecialchars($combinedState) ?></td></tr>
+<tr><td>URFD Service State</td><td class="<?= state_class($urfdState) ?>"><?= htmlspecialchars($urfdState) ?></td></tr>
+<tr><td>TCD Service State</td><td class="<?= state_class($tcdState) ?>"><?= htmlspecialchars($tcdState) ?></td></tr>
+<tr><td>Transcoder Status</td><td class="<?= state_class($transcoderStatus) ?>"><?= htmlspecialchars($transcoderStatus) ?></td></tr>
+<tr><td>DVSI Dongle Status</td><td class="<?= state_class($dvsiStatus) ?>"><?= htmlspecialchars($dvsiStatus . " (" . $dvsiCount . ")") ?></td></tr>
 <tr><td>Reflector Uptime</td><td><?= htmlspecialchars($reflectorUptime) ?></td></tr>
 <tr><td>Running Since</td><td><?= htmlspecialchars($reflectorSince) ?></td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2>Protocol Status</h2>
+<table>
+<tr><th>Protocol</th><th>Port</th><th>Status</th></tr>
+<?php foreach ($protocols as $p): ?>
+<?php $state = udp_listener_state($p[1]); ?>
+<tr>
+<td><?= htmlspecialchars($p[0]) ?></td>
+<td><?= htmlspecialchars($p[1]) ?></td>
+<td class="<?= state_class($state) ?>"><?= htmlspecialchars($state) ?></td>
+</tr>
+<?php endforeach; ?>
 </table>
 </div>
 
