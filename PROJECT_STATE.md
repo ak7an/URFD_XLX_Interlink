@@ -1049,3 +1049,59 @@ Sysop dashboard integration validated.
 
 Monit is now an official supported component of the URFD_XLX_Interlink deployment framework.
 
+
+---
+
+## Project Direction Clarification
+
+Date: 2026-06-10
+
+### XLX Interlink Policy
+
+URFD_XLX_Interlink is intended to operate as a multi-mode reflector platform with reflector-to-reflector interconnection.
+
+Supported architecture:
+
+    Radio / Repeater / Hotspot
+               ↓
+         URFD Reflector
+               ↓
+         XLX Interlink
+               ↓
+       Other Reflectors
+
+Supported:
+
+- URFD reflector services
+- XLX interlinking
+- D-Star
+- DMR
+- YSF
+- NXDN
+- P25
+- M17
+- TCD transcoding
+- Dashboard integration
+- Monit integration
+
+Not Supported:
+
+- BrandMeister DMR Master operation
+
+Rationale:
+
+- Avoids port 10002 conflicts
+- Simplifies deployment
+- Simplifies support
+- Keeps project focused on reflector services
+- Provides consistent sysop experience
+
+Future installer and documentation should assume XLX Interlink as the supported interconnect model.
+
+BrandMeister integration should not be added to installer workflows or deployment documentation.
+
+This is an intentional project design decision.
+
+Status:
+
+Approved.
