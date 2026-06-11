@@ -903,3 +903,149 @@ Status:
 Monit access validated.
 Remote dashboard access validated.
 URFD process monitor corrected from pidfile monitoring to process matching.
+
+---
+
+## Checkpoint: Monit Integration and Remote Sysop Maintenance
+
+Date: 2026-06-10
+
+### Objective
+
+Provide remote maintenance and recovery capability for reflector sysops without embedding privileged restart controls directly into the custom dashboard.
+
+### Architecture
+
+Custom Dashboard:
+
+- Status monitoring
+- Reflector visibility
+- Protocol visibility
+- Sysop operational visibility
+
+Monit:
+
+- Service monitoring
+- Service restart
+- Process monitoring
+- Resource monitoring
+- Maintenance interface
+
+### Security Model
+
+Monit web interface:
+
+- Bound to localhost
+- Accessed through Apache reverse proxy
+- HTTPS protected
+- Authenticated access required
+
+Current URL:
+
+    /monit/
+
+Dashboard integration:
+
+Custom Sysop Dashboard now provides:
+
+- Maintenance Tools section
+- Monit Dashboard link
+
+### Monitored Components
+
+Current process monitoring:
+
+- URFD
+- TCD
+
+Current service control target:
+
+- urfd-tcd.service
+
+Current system monitoring:
+
+- CPU load
+- Memory usage
+
+Future monitoring candidates:
+
+- Disk usage
+- XML feed freshness
+- RadioID update status
+- Apache service state
+
+### Installer Integration
+
+Monit is now considered a supported deployment component.
+
+Added:
+
+- scripts/install-monit.sh
+
+Installer workflow now includes:
+
+- Dependency installation
+- Dashboard installation
+- RadioID installation
+- RadioID update automation
+- Monit installation
+- Reflector configuration
+- Validation
+
+### Credential Handling
+
+Installer requirement:
+
+Monit credentials must be generated during installation.
+
+Installer prompts should request:
+
+- Monit username
+- Monit password
+
+The installer automatically generates:
+
+- Apache Basic Auth credentials
+- Monit web credentials
+
+No usernames or passwords should be hardcoded.
+
+### Validation Coverage
+
+check-install.sh now validates:
+
+- Monit installed
+- Monit running
+- Monit configuration present
+- Apache proxy configuration present
+- Authentication file present
+- Local Monit web service responding
+
+### Future Improvement
+
+Current Monit process definitions contain development-path references.
+
+Future work:
+
+Replace hardcoded path assumptions with deployment-aware process detection.
+
+Example:
+
+Current:
+
+    /home/ed/urfd/reflector/urfd
+
+Future:
+
+    Automatically discover installed URFD path
+
+### Status
+
+Monit integration complete.
+
+Remote maintenance access validated.
+
+Sysop dashboard integration validated.
+
+Monit is now an official supported component of the URFD_XLX_Interlink deployment framework.
+
