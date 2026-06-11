@@ -164,6 +164,17 @@ th{border-bottom:1px solid #2d425c;}
 </table>
 </div>
 
+
+<div class="card">
+<h2>Maintenance Tools</h2>
+<table>
+<tr>
+<td>Monit Dashboard</td>
+<td><a href="/monit/" style="color:#66ccff;font-weight:bold;">Open Monit Service Manager</a></td>
+</tr>
+</table>
+</div>
+
 <div class="card">
 <h2>Server Status</h2>
 <table>
