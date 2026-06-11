@@ -106,6 +106,39 @@ check_file "RadioID updater" "/usr/local/bin/urfd-radioid-update"
 check_file "RadioID config" "/etc/urfd-dashboard/radioid.conf"
 check_file "Dashboard config" "/etc/urfd-dashboard/dashboard.conf"
 
+if [ -r /etc/urfd-dashboard/dashboard.conf ]; then
+    check_pass "Dashboard config readable"
+
+    CH_ENABLED="$(grep -E '^CALLING_HOME_ENABLED=' /etc/urfd-dashboard/dashboard.conf | cut -d= -f2- || true)"
+
+    if [ "$CH_ENABLED" = "true" ]; then
+        echo
+        echo "===== XLX Calling Home / Directory Publishing ====="
+
+        CH_DASH="$(grep -E '^CALLING_HOME_DASHBOARD_URL=' /etc/urfd-dashboard/dashboard.conf | cut -d= -f2- || true)"
+        CH_API="$(grep -E '^CALLING_HOME_API_URL=' /etc/urfd-dashboard/dashboard.conf | cut -d= -f2- || true)"
+        CH_HASH="$(grep -E '^CALLING_HOME_HASH_FILE=' /etc/urfd-dashboard/dashboard.conf | cut -d= -f2- || true)"
+        CH_INTERLINK="$(grep -E '^CALLING_HOME_INTERLINK_FILE=' /etc/urfd-dashboard/dashboard.conf | cut -d= -f2- || true)"
+
+        [ -n "$CH_DASH" ] && check_pass "Calling Home dashboard URL configured" || check_fail "Calling Home dashboard URL missing"
+        [ -n "$CH_API" ] && check_pass "Calling Home API URL configured" || check_fail "Calling Home API URL missing"
+
+        if [ -n "$CH_HASH" ] && [ -r "$CH_HASH" ]; then
+            check_pass "Calling Home hash file readable: $CH_HASH"
+        else
+            check_fail "Calling Home hash file missing or unreadable: ${CH_HASH:-unset}"
+        fi
+
+        if [ -n "$CH_INTERLINK" ] && [ -r "$CH_INTERLINK" ]; then
+            check_pass "Calling Home interlink file readable: $CH_INTERLINK"
+        else
+            check_warn "Calling Home interlink file missing or unreadable: ${CH_INTERLINK:-unset}"
+        fi
+    else
+        check_pass "XLX Calling Home disabled by default"
+    fi
+fi
+
 if [ -r /var/log/xlxd.xml ]; then
     check_pass "XML status readable"
 else
@@ -164,6 +197,24 @@ if curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:2812/ | grep -qE '200
 else
     check_warn "Monit localhost web UI not responding"
 fi
+
+echo
+echo "===== XLX Calling Home Timer ====="
+
+if systemctl list-unit-files | grep -q '^urfd-callinghome.timer'; then
+    check_pass "XLX Calling Home timer installed"
+else
+    check_warn "XLX Calling Home timer not installed"
+fi
+
+if systemctl is-enabled --quiet urfd-callinghome.timer 2>/dev/null; then
+    check_pass "XLX Calling Home timer enabled"
+else
+    check_warn "XLX Calling Home timer not enabled"
+fi
+
+check_file "XLX Calling Home publisher" "/usr/local/bin/urfd-callinghome"
+check_file "XLX Calling Home publisher source" "/var/www/html/urf/urfd/bin/urfd-callinghome"
 
 echo
 echo "===== RadioID Timer ====="

@@ -1,0 +1,217 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+/*
+ * URFD_XLX_Interlink XLX Calling Home publisher
+ *
+ * Reuses the LX1IQ / XLXD Calling Home API format:
+ *
+ *   <query>CallingHome</query>
+ *   <reflector>...</reflector>
+ *   <interlinks>...</interlinks>
+ *
+ * Default behavior is controlled by:
+ *
+ *   /etc/urfd-dashboard/dashboard.conf
+ *
+ * Reflector identity is read from:
+ *
+ *   /usr/local/etc/urfd.ini
+ *   /etc/urfd.ini
+ *   reflector/urfd.ini
+ */
+
+function parse_key_value_file(string $path): array
+{
+    $out = [];
+
+    if (!is_readable($path)) {
+        return $out;
+    }
+
+    foreach (file($path, FILE_IGNORE_NEW_LINES) as $line) {
+        $line = trim($line);
+
+        if ($line === '' || str_starts_with($line, '#') || str_starts_with($line, ';')) {
+            continue;
+        }
+
+        if (!str_contains($line, '=')) {
+            continue;
+        }
+
+        [$key, $value] = array_map('trim', explode('=', $line, 2));
+
+        $value = preg_replace('/\s+#.*$/', '', $value);
+        $value = trim((string)$value, " \t\"'");
+
+        $out[$key] = $value;
+    }
+
+    return $out;
+}
+
+function find_urfd_ini(): string
+{
+    $candidates = [
+        '/usr/local/etc/urfd.ini',
+        '/etc/urfd.ini',
+        getcwd() . '/reflector/urfd.ini',
+        dirname(__DIR__, 2) . '/reflector/urfd.ini',
+    ];
+
+    foreach ($candidates as $candidate) {
+        if (is_readable($candidate)) {
+            return $candidate;
+        }
+    }
+
+    fwrite(STDERR, "[FAIL] Could not find readable urfd.ini\n");
+    exit(1);
+}
+
+function read_hash(string $path): string
+{
+    if (!is_readable($path)) {
+        fwrite(STDERR, "[FAIL] Calling Home hash file not readable: $path\n");
+        exit(1);
+    }
+
+    $hash = trim((string)file_get_contents($path));
+
+    if ($hash === '') {
+        fwrite(STDERR, "[FAIL] Calling Home hash file is empty: $path\n");
+        exit(1);
+    }
+
+    return $hash;
+}
+
+function build_interlink_xml(string $path): string
+{
+    if ($path === '' || !is_readable($path)) {
+        return "<interlinks>\n</interlinks>";
+    }
+
+    $xml = "<interlinks>";
+
+    foreach (file($path, FILE_IGNORE_NEW_LINES) as $line) {
+        $line = trim($line);
+
+        if ($line === '' || str_starts_with($line, '#')) {
+            continue;
+        }
+
+        $parts = preg_split('/\s+/', $line);
+
+        $name = htmlspecialchars($parts[0] ?? '', ENT_XML1);
+        $addr = htmlspecialchars($parts[1] ?? '', ENT_XML1);
+        $mods = htmlspecialchars($parts[2] ?? '', ENT_XML1);
+
+        if ($name === '') {
+            continue;
+        }
+
+        $xml .= "\n   <interlink>";
+        $xml .= "\n      <name>{$name}</name>";
+        $xml .= "\n      <address>{$addr}</address>";
+        $xml .= "\n      <modules>{$mods}</modules>";
+        $xml .= "\n   </interlink>";
+    }
+
+    $xml .= "\n</interlinks>";
+
+    return $xml;
+}
+
+$dashboardConf = '/etc/urfd-dashboard/dashboard.conf';
+
+if (!is_readable($dashboardConf)) {
+    fwrite(STDERR, "[FAIL] Missing dashboard config: $dashboardConf\n");
+    exit(1);
+}
+
+$conf = parse_key_value_file($dashboardConf);
+
+$enabled = strtolower($conf['CALLING_HOME_ENABLED'] ?? 'false');
+
+if ($enabled !== 'true') {
+    echo "[PASS] XLX Calling Home disabled\n";
+    exit(0);
+}
+
+$urfdIniPath = find_urfd_ini();
+$urfd = parse_key_value_file($urfdIniPath);
+
+$apiUrl = $conf['CALLING_HOME_API_URL'] ?? 'http://xlxapi.rlx.lu/api.php';
+$hashFile = $conf['CALLING_HOME_HASH_FILE'] ?? '/var/lib/urfd/callinghome.hash';
+$lastFile = $conf['CALLING_HOME_LAST_FILE'] ?? '/var/lib/urfd/lastcallhome';
+$interlinkFile = $conf['CALLING_HOME_INTERLINK_FILE'] ?? '/usr/local/etc/urfd.interlink';
+
+$reflectorName = $urfd['Callsign'] ?? '';
+$dashboardUrl = $conf['CALLING_HOME_DASHBOARD_URL'] ?? ($urfd['DashboardUrl'] ?? '');
+$country = $conf['CALLING_HOME_COUNTRY'] ?? ($urfd['Country'] ?? '');
+$comment = $conf['CALLING_HOME_COMMENT'] ?? ($urfd['Sponsor'] ?? '');
+$overrideIp = $conf['CALLING_HOME_OVERRIDE_IP'] ?? '';
+
+if ($reflectorName === '') {
+    fwrite(STDERR, "[FAIL] Reflector callsign missing from urfd.ini\n");
+    exit(1);
+}
+
+if ($dashboardUrl === '') {
+    fwrite(STDERR, "[FAIL] Dashboard URL missing\n");
+    exit(1);
+}
+
+$hash = read_hash($hashFile);
+
+$uptime = 0;
+$xmlFile = '/var/log/xlxd.xml';
+
+if (is_readable($xmlFile)) {
+    $xmlText = (string)file_get_contents($xmlFile);
+    if (preg_match('/<(?:REFLECTOR)?UPTIME>([^<]+)<\/(?:REFLECTOR)?UPTIME>/i', $xmlText, $m)) {
+        $uptime = trim($m[1]);
+    }
+}
+
+$reflectorXml = '
+<reflector>
+   <name>' . htmlspecialchars($reflectorName, ENT_XML1) . '</name>
+   <uptime>' . htmlspecialchars((string)$uptime, ENT_XML1) . '</uptime>
+   <hash>' . htmlspecialchars($hash, ENT_XML1) . '</hash>
+   <url>' . htmlspecialchars($dashboardUrl, ENT_XML1) . '</url>
+   <country>' . htmlspecialchars($country, ENT_XML1) . '</country>
+   <comment>' . htmlspecialchars($comment, ENT_XML1) . '</comment>
+   <ip>' . htmlspecialchars($overrideIp, ENT_XML1) . '</ip>
+   <reflectorversion>URFD_XLX_Interlink</reflectorversion>
+</reflector>';
+
+$interlinkXml = build_interlink_xml($interlinkFile);
+
+$payload = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' . "\n" .
+           '<query>CallingHome</query>' .
+           $reflectorXml .
+           $interlinkXml;
+
+$context = stream_context_create([
+    'http' => [
+        'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+        'method'  => 'POST',
+        'content' => http_build_query(['xml' => $payload]),
+        'timeout' => 15,
+    ],
+]);
+
+$result = @file_get_contents($apiUrl, false, $context);
+
+if ($result === false) {
+    fwrite(STDERR, "[FAIL] Calling Home connection failed\n");
+    exit(1);
+}
+
+@file_put_contents($lastFile, gmdate('c') . "\n");
+
+echo "[PASS] XLX Calling Home published: {$reflectorName}\n";

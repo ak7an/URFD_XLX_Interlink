@@ -32,6 +32,8 @@ echo
 
 "$ROOT/scripts/install-monit.sh"
 
+"$ROOT/scripts/install-callinghome-timer.sh"
+
 echo
 echo "===== Optional Reflector Configuration ====="
 echo

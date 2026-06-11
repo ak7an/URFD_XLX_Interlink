@@ -23,6 +23,11 @@ if [ -f "$WEBROOT/bin/urfd-radioid-update" ]; then
     chmod 755 "$WEBROOT/bin/urfd-radioid-update"
 fi
 
+if [ -f "$WEBROOT/bin/urfd-callinghome" ]; then
+    chmod 755 "$WEBROOT/bin/urfd-callinghome"
+    install -m 755 "$WEBROOT/bin/urfd-callinghome" /usr/local/bin/urfd-callinghome
+fi
+
 echo
 echo "[PASS] Dashboard installed"
 echo "Location: $WEBROOT"

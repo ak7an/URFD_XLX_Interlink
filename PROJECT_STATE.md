@@ -1162,3 +1162,180 @@ Calling-home should remain disabled unless the sysop explicitly enables it.
 Status:
 
 Needs review after long weekend trip.
+
+---
+
+## XLX Calling Home Integration Framework
+
+Date: 2026-06-11
+
+Objective:
+
+Integrate XLX Calling Home support into the URFD deployment
+framework while maintaining compatibility with existing XLXD
+directory listings and host-file ecosystem updates.
+
+Design Decisions:
+
+Calling Home remains:
+
+- Optional
+- Disabled by default
+- Sysop controlled
+
+Installer now prompts:
+
+- Enable XLX Calling Home
+- Directory publishing participation
+
+Calling Home state storage:
+
+Created reflector-owned state directory:
+
+    /var/lib/urfd
+
+Calling Home files:
+
+    /var/lib/urfd/callinghome.hash
+    /var/lib/urfd/lastcallhome
+
+Reasoning:
+
+Calling Home identity belongs to the reflector,
+not the dashboard subsystem.
+
+Hash ownership:
+
+    root:root
+    600 permissions
+
+Legacy XLXD Migration Support:
+
+Installer now detects:
+
+    /xlxd-ch/callinghome.php
+
+If present:
+
+Sysop is prompted whether to reuse the
+existing XLXD Calling Home hash.
+
+Reuse preserves:
+
+- Existing XLX directory listing identity
+- Existing reflector registration
+- Existing host-file ecosystem continuity
+
+New installations:
+
+Generate a new random Calling Home hash.
+
+Dashboard Configuration:
+
+Added support for:
+
+    CALLING_HOME_ENABLED
+    CALLING_HOME_DASHBOARD_URL
+    CALLING_HOME_API_URL
+    CALLING_HOME_COUNTRY
+    CALLING_HOME_COMMENT
+    CALLING_HOME_OVERRIDE_IP
+    CALLING_HOME_INTERLINK_FILE
+    CALLING_HOME_HASH_FILE
+    CALLING_HOME_LAST_FILE
+
+Stored in:
+
+    /etc/urfd-dashboard/dashboard.conf
+
+Calling Home Publisher:
+
+Added:
+
+    dashboard/bin/urfd-callinghome
+
+Purpose:
+
+Reuses LX1IQ XLXD Calling Home API format.
+
+Publisher generates:
+
+    <query>CallingHome</query>
+    <reflector>...</reflector>
+    <interlinks>...</interlinks>
+
+and submits to:
+
+    http://xlxapi.rlx.lu/api.php
+
+Compatibility Goal:
+
+Maintain XLXD API compatibility while
+remaining integrated into the URFD
+deployment framework.
+
+Systemd Integration:
+
+Added:
+
+    scripts/install-callinghome-timer.sh
+
+Installs:
+
+    urfd-callinghome.service
+    urfd-callinghome.timer
+
+Timer interval:
+
+    OnBootSec=2min
+    OnUnitActiveSec=10min
+
+Installer Integration:
+
+Added Calling Home timer installation to:
+
+    install-all.sh
+
+Dashboard Installation:
+
+Added deployment of:
+
+    /usr/local/bin/urfd-callinghome
+
+Validation Integration:
+
+check-install.sh now validates:
+
+- Calling Home enabled/disabled state
+- Dashboard URL presence
+- API URL presence
+- Hash file readability
+- Interlink file readability
+- Publisher installation
+- Systemd timer installation
+- Systemd timer enablement
+
+Outstanding Review Items:
+
+- Eliminate duplicate identity prompts
+- Read Callsign from urfd.ini
+- Read Country from urfd.ini
+- Read Sponsor from urfd.ini
+- Read DashboardUrl from urfd.ini
+
+Desired final architecture:
+
+    reflector/urfd.ini
+        ↓
+    Reflector identity
+
+    dashboard.conf
+        ↓
+    Calling Home behavior
+
+Current Status:
+
+Framework implemented.
+
+Pending live validation against XLX API.
+
