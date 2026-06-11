@@ -819,3 +819,87 @@ Future possibilities:
 4. Enhance URFD/XLX interlink operation
 5. Investigate true active stream reporting from URFD
 
+
+---
+
+## Checkpoint: Monit Remote Maintenance Integration
+
+Date: 2026-06-10
+
+Monit was installed and validated as a remote sysop maintenance tool.
+
+Purpose:
+
+- Remote service monitoring
+- Remote service restart
+- Server health visibility
+- Optional administrative recovery actions
+
+Architecture decision:
+
+The custom URFD sysop dashboard should not directly perform privileged restart/reboot actions.
+
+Instead:
+
+- Custom sysop dashboard provides status visibility
+- Monit provides authenticated service maintenance controls
+- Apache HTTPS reverse proxy exposes Monit securely
+- Monit itself binds to localhost
+
+Current Monit access model:
+
+- Apache reverse proxy path: /monit/
+- Apache Basic Auth protects access
+- Monit web UI listens on 127.0.0.1:2812
+- Username/password currently configured locally
+
+Important deployment requirement:
+
+Monit credentials must NOT be hardcoded in installer scripts.
+
+Future installer behavior:
+
+During install-all.sh or install-monit.sh, prompt the sysop for:
+
+- Monit username
+- Monit password
+- Apache Basic Auth username
+- Apache Basic Auth password
+
+Recommended simplification:
+
+Use one shared credential pair for both Apache Basic Auth and Monit internal auth unless the sysop chooses otherwise.
+
+Example prompt flow:
+
+- Enter Monit/admin username
+- Enter Monit/admin password
+- Confirm password
+
+The installer should then generate:
+
+- /etc/apache2/.htpasswd-monit
+- /etc/monit/conf-enabled/urfd-monit-webui
+- /etc/apache2/conf-available/urfd-monit.conf
+- /etc/monit/conf-enabled/urfd-services
+
+Current monitored URFD processes:
+
+- /home/ed/urfd/reflector/urfd
+- /usr/local/bin/tcd
+
+Current service control target:
+
+- urfd-tcd.service
+
+Dashboard direction:
+
+The sysop dashboard should provide a link to the Monit dashboard for maintenance actions.
+
+No restart or reboot buttons should be added directly to dashboard PHP at this stage.
+
+Status:
+
+Monit access validated.
+Remote dashboard access validated.
+URFD process monitor corrected from pidfile monitoring to process matching.
