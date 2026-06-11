@@ -104,6 +104,7 @@ check_file "RadioID SQLite DB" "/var/lib/urfd-dashboard/radioid.sqlite"
 check_file "RadioID importer" "/usr/local/bin/urfd-radioid-import"
 check_file "RadioID updater" "/usr/local/bin/urfd-radioid-update"
 check_file "RadioID config" "/etc/urfd-dashboard/radioid.conf"
+check_file "Dashboard config" "/etc/urfd-dashboard/dashboard.conf"
 
 if [ -r /var/log/xlxd.xml ]; then
     check_pass "XML status readable"

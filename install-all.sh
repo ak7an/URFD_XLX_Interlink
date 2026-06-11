@@ -20,6 +20,8 @@ echo
 
 "$ROOT/scripts/install-deps.sh"
 
+"$ROOT/scripts/install-dashboard-config.sh"
+
 "$ROOT/scripts/install-dashboard.sh"
 
 "$ROOT/scripts/setup-radioid-db.sh"

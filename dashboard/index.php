@@ -1,5 +1,33 @@
 <?php
 
+function dashboard_timezone()
+{
+    $conf = '/etc/urfd-dashboard/dashboard.conf';
+    $tz = 'UTC';
+
+    if (is_readable($conf)) {
+        foreach (file($conf, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+            $line = trim($line);
+            if ($line === '' || $line[0] === '#') {
+                continue;
+            }
+            if (strpos($line, 'TIMEZONE=') === 0) {
+                $tz = trim(substr($line, 9));
+                break;
+            }
+        }
+    }
+
+    if (!in_array($tz, timezone_identifiers_list(), true)) {
+        $tz = 'UTC';
+    }
+
+    date_default_timezone_set($tz);
+    return $tz;
+}
+
+$dashboardTimezone = dashboard_timezone();
+
 $time = date('Y-m-d H:i:s T');
 $xmlFile = '/var/log/xlxd.xml';
 
