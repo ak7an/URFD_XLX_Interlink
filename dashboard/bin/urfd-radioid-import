@@ -55,6 +55,54 @@ def import_semicolon_simple(cur, protocol, path):
 
     return count, skipped
 
+def import_whitespace_simple(cur, protocol, path):
+    count = 0
+    skipped = 0
+
+    with path.open("r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+
+            parts = line.split()
+            if len(parts) < 2:
+                skipped += 1
+                continue
+
+            rid = parts[0].strip()
+            callsign = parts[1].strip().upper()
+            name_parts = parts[2:]
+
+            if not rid or not callsign:
+                skipped += 1
+                continue
+
+            try:
+                rid_int = int(rid)
+            except ValueError:
+                skipped += 1
+                continue
+
+            first = name_parts[0] if len(name_parts) >= 1 else ""
+            last = " ".join(name_parts[1:]) if len(name_parts) >= 2 else ""
+
+            cur.execute("""
+                INSERT INTO radioid
+                (id, callsign, first_name, last_name, protocol, source, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET
+                    callsign=excluded.callsign,
+                    first_name=excluded.first_name,
+                    last_name=excluded.last_name,
+                    protocol=excluded.protocol,
+                    source=excluded.source,
+                    updated_at=CURRENT_TIMESTAMP
+            """, (rid_int, callsign, first, last, protocol, str(path)))
+            count += 1
+
+    return count, skipped
+
 def import_csv(cur, protocol, path):
     count = 0
     skipped = 0
@@ -135,6 +183,8 @@ def main():
 
     if ";" in first_line and "," not in first_line:
         count, skipped = import_semicolon_simple(cur, protocol, path)
+    elif len(first_line.split()) >= 2 and first_line.split()[0].isdigit():
+        count, skipped = import_whitespace_simple(cur, protocol, path)
     else:
         count, skipped = import_csv(cur, protocol, path)
 
