@@ -75,6 +75,8 @@ echo "===== Dependencies ====="
 check_cmd "URFD" "urfd"
 check_cmd "TCD" "tcd"
 check_cmd "Apache2" "apache2"
+check_cmd "Monit" "monit"
+check_cmd "htpasswd" "htpasswd"
 check_cmd "PHP" "php"
 check_cmd "SQLite3" "sqlite3"
 check_cmd "Python3" "python3"
@@ -127,6 +129,39 @@ if apache2ctl -S 2>/dev/null | grep -q ':443'; then
     check_pass "Apache HTTPS virtual host present"
 else
     check_warn "Apache HTTPS virtual host not detected"
+fi
+
+
+echo
+echo "===== Monit Maintenance ====="
+
+if systemctl list-unit-files | grep -q '^monit.service'; then
+    check_pass "Monit service installed"
+else
+    check_fail "Monit service not installed"
+fi
+
+if systemctl is-active --quiet monit; then
+    check_pass "Monit active"
+else
+    check_fail "Monit not active"
+fi
+
+check_file "Monit web UI config" "/etc/monit/conf-enabled/urfd-monit-webui"
+check_file "Monit URFD service config" "/etc/monit/conf-enabled/urfd-services"
+check_file "Monit Apache proxy config" "/etc/apache2/conf-available/urfd-monit.conf"
+check_file "Monit Apache auth file" "/etc/apache2/.htpasswd-monit"
+
+if apache2ctl -S 2>/dev/null | grep -q 'urfd-monit'; then
+    check_pass "Monit Apache config loaded"
+else
+    check_warn "Monit Apache config not detected in apache2ctl output"
+fi
+
+if curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:2812/ | grep -qE '200|401'; then
+    check_pass "Monit localhost web UI responding"
+else
+    check_warn "Monit localhost web UI not responding"
 fi
 
 echo

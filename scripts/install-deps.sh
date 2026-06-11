@@ -11,6 +11,8 @@ apt-get install -y \
     cmake \
     pkg-config \
     apache2 \
+    apache2-utils \
+    monit \
     php \
     php-cli \
     php-xml \

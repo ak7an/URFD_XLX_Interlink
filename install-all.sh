@@ -28,6 +28,8 @@ echo
 
 "$ROOT/scripts/install-radioid-timer.sh"
 
+"$ROOT/scripts/install-monit.sh"
+
 echo
 echo "===== Optional Reflector Configuration ====="
 echo
