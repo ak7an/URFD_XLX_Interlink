@@ -1105,3 +1105,60 @@ This is an intentional project design decision.
 Status:
 
 Approved.
+
+---
+
+## Clarification: XLX Calling Home Integration Approach
+
+Date: 2026-06-11
+
+The XLX calling-home / keepalive host-file item should not automatically become a separate project subsystem.
+
+Current thinking:
+
+This appears to be leftover behavior from the legacy XLXD/Luc dashboard and XLX ecosystem configuration.
+
+Preferred approach:
+
+Incorporate any required calling-home / host-file configuration into the existing deployment and configuration workflow.
+
+Primary scripts to review/update first:
+
+- install-all.sh
+- scripts/configure-reflector.sh
+- scripts/check-install.sh
+- scripts/install-dashboard.sh
+
+Only create a separate script if the implementation becomes large enough to justify it.
+
+The goal is:
+
+- Avoid unnecessary extra processes
+- Avoid duplicating legacy XLXD behavior blindly
+- Reuse the existing installer/configuration framework
+- Keep calling-home optional and sysop-controlled
+- Keep the custom dashboard as the primary dashboard target
+
+Important distinction:
+
+The legacy XLXD dashboard files may contain useful configuration references, especially:
+
+    dashboard/pgs/config.php
+
+but they should be treated as reference material, not as the primary development target.
+
+Next review should determine:
+
+- Which config.php values still matter for URFD_XLX_Interlink
+- Which values are only legacy dashboard leftovers
+- Whether calling-home behavior is required for XLX interlink compatibility
+- Whether host/hash-file generation belongs in configure-reflector.sh
+- Whether check-install.sh should validate required host-file/calling-home configuration
+
+Installer default:
+
+Calling-home should remain disabled unless the sysop explicitly enables it.
+
+Status:
+
+Needs review after long weekend trip.
