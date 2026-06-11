@@ -101,6 +101,63 @@ function state_class($state)
     return ($state === "active" || $state === "ready" || $state === "online") ? "good" : "bad";
 }
 
+function read_dashboard_config()
+{
+    $conf = '/etc/urfd-dashboard/dashboard.conf';
+    $out = [];
+
+    if (!is_readable($conf)) {
+        return $out;
+    }
+
+    foreach (file($conf, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#' || strpos($line, '=') === false) {
+            continue;
+        }
+
+        [$key, $value] = array_map('trim', explode('=', $line, 2));
+        $out[$key] = $value;
+    }
+
+    return $out;
+}
+
+function file_status($path)
+{
+    if ($path === '') {
+        return 'not configured';
+    }
+
+    if (!file_exists($path)) {
+        return 'missing';
+    }
+
+    $perms = substr(sprintf('%o', fileperms($path)), -4);
+    $owner = function_exists('posix_getpwuid') ? posix_getpwuid(fileowner($path)) : null;
+    $group = function_exists('posix_getgrgid') ? posix_getgrgid(filegroup($path)) : null;
+
+    $ownerName = $owner['name'] ?? (string)fileowner($path);
+    $groupName = $group['name'] ?? (string)filegroup($path);
+
+    if ($perms === '0600' && $ownerName === 'root' && $groupName === 'root') {
+        return "present / protected ($ownerName:$groupName $perms)";
+    }
+
+    return "present / review permissions ($ownerName:$groupName $perms)";
+}
+
+function file_timestamp($path)
+{
+    if ($path === '' || !is_readable($path)) {
+        return 'Unavailable';
+    }
+
+    $value = trim((string)file_get_contents($path));
+    return $value !== '' ? $value : 'Unavailable';
+}
+
+
 $combinedSvc = 'urfd-tcd.service';
 
 $hostname = gethostname();
@@ -116,6 +173,17 @@ $reflectorUptime = service_uptime($combinedSvc);
 $dvsiCount = dvsi_dongle_count();
 $dvsiStatus = $dvsiCount > 0 ? "ready" : "not found";
 $transcoderStatus = ($combinedState === "active" && $dvsiCount > 0) ? "ready" : "not ready";
+
+$dashboardConfig = read_dashboard_config();
+$callingHomeEnabled = strtolower($dashboardConfig['CALLING_HOME_ENABLED'] ?? 'false');
+$callingHomeState = $callingHomeEnabled === 'true' ? 'enabled' : 'disabled';
+$callingHomeTimer = service_state('urfd-callinghome.timer');
+$callingHomeHashFile = $dashboardConfig['CALLING_HOME_HASH_FILE'] ?? '/var/lib/urfd/callinghome.hash';
+$callingHomeLastFile = $dashboardConfig['CALLING_HOME_LAST_FILE'] ?? '/var/lib/urfd/lastcallhome';
+$callingHomeInterlinkFile = $dashboardConfig['CALLING_HOME_INTERLINK_FILE'] ?? '';
+$callingHomeHashStatus = file_status($callingHomeHashFile);
+$callingHomeLastPublish = file_timestamp($callingHomeLastFile);
+$callingHomeInterlinkStatus = file_exists($callingHomeInterlinkFile) ? 'present' : 'missing';
 
 $protocols = [
     ["DPlus", 20001],
@@ -189,6 +257,19 @@ th{border-bottom:1px solid #2d425c;}
 <td class="<?= state_class($state) ?>"><?= htmlspecialchars($state) ?></td>
 </tr>
 <?php endforeach; ?>
+</table>
+</div>
+
+
+<div class="card">
+<h2>XLX Calling Home</h2>
+<table>
+<tr><td>Directory Publishing</td><td class="<?= $callingHomeState === 'enabled' ? 'good' : 'bad' ?>"><?= htmlspecialchars($callingHomeState) ?></td></tr>
+<tr><td>Timer</td><td class="<?= state_class($callingHomeTimer) ?>"><?= htmlspecialchars($callingHomeTimer) ?></td></tr>
+<tr><td>Hash File</td><td class="<?= strpos($callingHomeHashStatus, 'protected') !== false ? 'good' : 'bad' ?>"><?= htmlspecialchars($callingHomeHashStatus) ?></td></tr>
+<tr><td>Hash Path</td><td><?= htmlspecialchars($callingHomeHashFile) ?></td></tr>
+<tr><td>Last Publish</td><td><?= htmlspecialchars($callingHomeLastPublish) ?></td></tr>
+<tr><td>Interlink File</td><td class="<?= $callingHomeInterlinkStatus === 'present' ? 'good' : 'bad' ?>"><?= htmlspecialchars($callingHomeInterlinkStatus) ?></td></tr>
 </table>
 </div>
 
