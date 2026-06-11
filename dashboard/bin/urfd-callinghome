@@ -25,6 +25,7 @@ declare(strict_types=1);
 function parse_key_value_file(string $path): array
 {
     $out = [];
+    $section = '';
 
     if (!is_readable($path)) {
         return $out;
@@ -34,6 +35,11 @@ function parse_key_value_file(string $path): array
         $line = trim($line);
 
         if ($line === '' || str_starts_with($line, '#') || str_starts_with($line, ';')) {
+            continue;
+        }
+
+        if (str_starts_with($line, '[') && str_ends_with($line, ']')) {
+            $section = trim($line, "[] \t");
             continue;
         }
 
@@ -47,6 +53,10 @@ function parse_key_value_file(string $path): array
         $value = trim((string)$value, " \t\"'");
 
         $out[$key] = $value;
+
+        if ($section !== '') {
+            $out[$section . '.' . $key] = $value;
+        }
     }
 
     return $out;
@@ -57,6 +67,7 @@ function find_urfd_ini(): string
     $candidates = [
         '/usr/local/etc/urfd.ini',
         '/etc/urfd.ini',
+        '/home/ed/urfd/reflector/urfd.ini',
         getcwd() . '/reflector/urfd.ini',
         dirname(__DIR__, 2) . '/reflector/urfd.ini',
     ];
@@ -149,10 +160,10 @@ $hashFile = $conf['CALLING_HOME_HASH_FILE'] ?? '/var/lib/urfd/callinghome.hash';
 $lastFile = $conf['CALLING_HOME_LAST_FILE'] ?? '/var/lib/urfd/lastcallhome';
 $interlinkFile = $conf['CALLING_HOME_INTERLINK_FILE'] ?? '/usr/local/etc/urfd.interlink';
 
-$reflectorName = $urfd['Callsign'] ?? '';
-$dashboardUrl = $conf['CALLING_HOME_DASHBOARD_URL'] ?? ($urfd['DashboardUrl'] ?? '');
-$country = $conf['CALLING_HOME_COUNTRY'] ?? ($urfd['Country'] ?? '');
-$comment = $conf['CALLING_HOME_COMMENT'] ?? ($urfd['Sponsor'] ?? '');
+$reflectorName = $urfd['Names.Callsign'] ?? ($urfd['Callsign'] ?? '');
+$dashboardUrl = $conf['CALLING_HOME_DASHBOARD_URL'] ?? ($urfd['Names.DashboardUrl'] ?? ($urfd['DashboardUrl'] ?? ''));
+$country = $conf['CALLING_HOME_COUNTRY'] ?? ($urfd['Names.Country'] ?? ($urfd['Country'] ?? ''));
+$comment = $conf['CALLING_HOME_COMMENT'] ?? ($urfd['Names.Sponsor'] ?? ($urfd['Sponsor'] ?? ''));
 $overrideIp = $conf['CALLING_HOME_OVERRIDE_IP'] ?? '';
 
 if ($reflectorName === '') {
