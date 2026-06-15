@@ -75,6 +75,10 @@ echo "===== Dependencies ====="
 check_cmd "URFD" "urfd"
 check_cmd "TCD" "tcd"
 check_cmd "Apache2" "apache2"
+check_cmd "make" "make"
+check_cmd "g++" "g++"
+check_cmd "make" "make"
+check_cmd "g++" "g++"
 check_cmd "Monit" "monit"
 check_cmd "htpasswd" "htpasswd"
 check_cmd "PHP" "php"
@@ -92,6 +96,86 @@ if php -m | grep -q '^pdo_sqlite$'; then
     check_pass "PHP pdo_sqlite module loaded"
 else
     check_fail "PHP pdo_sqlite module missing"
+fi
+
+
+echo
+echo "===== Reflector Core Stack ====="
+
+check_file "URFD config" "/usr/local/etc/urfd.ini"
+check_file "URFD interlink config" "/usr/local/etc/urfd.interlink"
+check_file "TCD config" "/usr/local/etc/tcd.ini"
+check_file "Combined URFD/TCD launcher" "/usr/local/bin/start-urfd-tcd.sh"
+check_file "Combined URFD/TCD service" "/etc/systemd/system/urfd-tcd.service"
+
+if ldconfig -p | grep -q 'libimbe_vocoder.so'; then
+    check_pass "IMBE vocoder library available"
+else
+    check_fail "IMBE vocoder library missing"
+fi
+
+if ldconfig -p | grep -q 'libftd2xx.so'; then
+    check_pass "FTDI D2XX library available"
+else
+    check_fail "FTDI D2XX library missing"
+fi
+
+if [ -f /usr/local/include/ftd2xx.h ]; then
+    check_pass "FTDI D2XX header present"
+else
+    check_fail "FTDI D2XX header missing"
+fi
+
+if ldd /usr/local/bin/tcd 2>/dev/null | grep -q 'not found'; then
+    check_fail "TCD has unresolved shared libraries"
+else
+    check_pass "TCD shared libraries resolved"
+fi
+
+if lsusb 2>/dev/null | grep -qi '0403:6015'; then
+    check_pass "DVSI/FTDI USB device detected"
+else
+    check_warn "No DVSI/FTDI USB device currently detected"
+fi
+
+
+echo
+echo "===== Reflector Core Stack ====="
+
+check_file "URFD config" "/usr/local/etc/urfd.ini"
+check_file "URFD interlink config" "/usr/local/etc/urfd.interlink"
+check_file "TCD config" "/usr/local/etc/tcd.ini"
+check_file "Combined URFD/TCD launcher" "/usr/local/bin/start-urfd-tcd.sh"
+check_file "Combined URFD/TCD service" "/etc/systemd/system/urfd-tcd.service"
+
+if ldconfig -p | grep -q 'libimbe_vocoder.so'; then
+    check_pass "IMBE vocoder library available"
+else
+    check_fail "IMBE vocoder library missing"
+fi
+
+if ldconfig -p | grep -q 'libftd2xx.so'; then
+    check_pass "FTDI D2XX library available"
+else
+    check_fail "FTDI D2XX library missing"
+fi
+
+if [ -f /usr/local/include/ftd2xx.h ]; then
+    check_pass "FTDI D2XX header present"
+else
+    check_fail "FTDI D2XX header missing"
+fi
+
+if ldd /usr/local/bin/tcd 2>/dev/null | grep -q 'not found'; then
+    check_fail "TCD has unresolved shared libraries"
+else
+    check_pass "TCD shared libraries resolved"
+fi
+
+if lsusb 2>/dev/null | grep -qi '0403:6015'; then
+    check_pass "DVSI/FTDI USB device detected"
+else
+    check_warn "No DVSI/FTDI USB device currently detected"
 fi
 
 echo
