@@ -217,9 +217,28 @@ $context = stream_context_create([
 ]);
 
 $result = @file_get_contents($apiUrl, false, $context);
+$statusLine = $http_response_header[0] ?? '';
+$responseFile = $conf['CALLING_HOME_RESPONSE_FILE'] ?? '/var/lib/urfd/callinghome.response';
+
+@file_put_contents(
+    $responseFile,
+    gmdate('c') . "\n" .
+    $statusLine . "\n" .
+    trim((string)$result) . "\n"
+);
 
 if ($result === false) {
     fwrite(STDERR, "[FAIL] Calling Home connection failed\n");
+    exit(1);
+}
+
+if (!preg_match('/^HTTP\/\S+\s+2\d\d\b/', $statusLine)) {
+    fwrite(STDERR, "[FAIL] Calling Home HTTP response not successful: {$statusLine}\n");
+    exit(1);
+}
+
+if (preg_match('/fail|error|denied|invalid/i', (string)$result)) {
+    fwrite(STDERR, "[FAIL] Calling Home API returned failure response\n");
     exit(1);
 }
 

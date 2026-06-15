@@ -178,9 +178,12 @@ $dashboardConfig = read_dashboard_config();
 $callingHomeEnabled = strtolower($dashboardConfig['CALLING_HOME_ENABLED'] ?? 'false');
 $callingHomeState = $callingHomeEnabled === 'true' ? 'enabled' : 'disabled';
 $callingHomeTimer = service_state('urfd-callinghome.timer');
+$callingHomeReflectorName = $dashboardConfig['CALLING_HOME_REFLECTOR_NAME'] ?? 'Unavailable';
 $callingHomeHashFile = $dashboardConfig['CALLING_HOME_HASH_FILE'] ?? '/var/lib/urfd/callinghome.hash';
 $callingHomeLastFile = $dashboardConfig['CALLING_HOME_LAST_FILE'] ?? '/var/lib/urfd/lastcallhome';
+$callingHomeResponseFile = $dashboardConfig['CALLING_HOME_RESPONSE_FILE'] ?? '/var/lib/urfd/callinghome.response';
 $callingHomeInterlinkFile = $dashboardConfig['CALLING_HOME_INTERLINK_FILE'] ?? '';
+$callingHomeResponseStatus = file_exists($callingHomeResponseFile) ? trim((string)file($callingHomeResponseFile)[1] ?? 'available') : 'missing';
 $callingHomeHashStatus = file_status($callingHomeHashFile);
 $callingHomeLastPublish = file_timestamp($callingHomeLastFile);
 $callingHomeInterlinkStatus = file_exists($callingHomeInterlinkFile) ? 'present' : 'missing';
@@ -265,7 +268,9 @@ th{border-bottom:1px solid #2d425c;}
 <h2>XLX Calling Home</h2>
 <table>
 <tr><td>Directory Publishing</td><td class="<?= $callingHomeState === 'enabled' ? 'good' : 'bad' ?>"><?= htmlspecialchars($callingHomeState) ?></td></tr>
+<tr><td>Published Reflector</td><td class="good"><?= htmlspecialchars($callingHomeReflectorName) ?></td></tr>
 <tr><td>Timer</td><td class="<?= state_class($callingHomeTimer) ?>"><?= htmlspecialchars($callingHomeTimer) ?></td></tr>
+<tr><td>Last API Response</td><td class="<?= strpos($callingHomeResponseStatus, '200') !== false ? 'good' : 'bad' ?>"><?= htmlspecialchars($callingHomeResponseStatus) ?></td></tr>
 <tr><td>Hash File</td><td class="<?= strpos($callingHomeHashStatus, 'protected') !== false ? 'good' : 'bad' ?>"><?= htmlspecialchars($callingHomeHashStatus) ?></td></tr>
 <tr><td>Hash Path</td><td><?= htmlspecialchars($callingHomeHashFile) ?></td></tr>
 <tr><td>Last Publish</td><td><?= htmlspecialchars($callingHomeLastPublish) ?></td></tr>
