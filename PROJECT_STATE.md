@@ -1571,3 +1571,153 @@ Commit:
 
 fe3a17c Parse whitespace DMR ID files with operator names
 
+
+---
+
+## Checkpoint: Full Reflector Installer Direction
+
+Date: 2026-06-15
+
+### Goal Clarification
+
+The installer goal is a complete reflector installation, not only dashboard and management tooling.
+
+A new sysop should be able to start from a clean supported system and run:
+
+    sudo ./install-all.sh
+
+and end with a working URFD_XLX_Interlink reflector stack.
+
+Target supported platforms:
+
+- Debian 13
+- Ubuntu
+- Raspberry Pi OS / Raspberry Pi hardware
+
+### Required Installed Stack
+
+The installer should ultimately cover:
+
+- URFD build and install
+- TCD build and install
+- URFD/TCD combined systemd service
+- Apache2
+- PHP
+- SQLite
+- Custom public dashboard
+- Custom sysop dashboard
+- RadioID database setup
+- RadioID updater timer
+- XLX Calling Home publisher
+- XLX Calling Home timer
+- Monit remote maintenance
+- Validation through check-install.sh
+
+### Installer Progress
+
+Added:
+
+- scripts/install-urfd.sh
+- scripts/install-tcd.sh
+- scripts/install-urfd-tcd-service.sh
+
+install-all.sh now runs:
+
+- scripts/install-deps.sh
+- scripts/install-urfd.sh
+- scripts/install-tcd.sh
+- scripts/install-urfd-tcd-service.sh
+- scripts/install-dashboard-config.sh
+- scripts/install-dashboard.sh
+- scripts/setup-radioid-db.sh
+- scripts/install-radioid-tools.sh
+- scripts/install-radioid-timer.sh
+- scripts/install-monit.sh
+- scripts/install-callinghome-timer.sh
+- scripts/configure-reflector.sh
+- scripts/check-install.sh
+
+### URFD Installer
+
+scripts/install-urfd.sh now:
+
+- Builds URFD from local reflector/ source
+- Installs urfd to /usr/local/bin/urfd
+- Installs default config to /usr/local/etc/urfd.ini if missing
+- Installs default interlink file to /usr/local/etc/urfd.interlink if missing
+- Preserves existing production config files
+
+### TCD Installer
+
+scripts/install-tcd.sh now:
+
+- Uses upstream TCD repository:
+  https://github.com/nostar/tcd.git
+
+- Expects TCD source beside URFD source:
+  ../tcd
+
+- Clones TCD if missing
+- Builds TCD
+- Installs tcd to /usr/local/bin/tcd
+- Installs default config to /usr/local/etc/tcd.ini if missing
+
+Important TCD source requirement:
+
+TCD expects the URFD source tree to be available as a sibling path:
+
+    ../urfd
+
+because several TCD source files are symlinks to the adjacent URFD reflector source tree.
+
+### Combined Service Installer
+
+scripts/install-urfd-tcd-service.sh now:
+
+- Creates /usr/local/bin/start-urfd-tcd.sh
+- Creates /etc/systemd/system/urfd-tcd.service
+- Uses production paths:
+  - /usr/local/bin/urfd
+  - /usr/local/etc/urfd.ini
+  - /usr/local/bin/tcd
+  - /usr/local/etc/tcd.ini
+- Enables urfd-tcd.service
+
+### Remaining Full-Install Blockers
+
+The installer is closer to full-stack deployment, but not yet complete for a clean machine.
+
+Remaining blockers:
+
+1. libimbe_vocoder install/build
+2. FTDI D2XX install per architecture
+3. Raspberry Pi / ARM handling
+4. check-install.sh validation updates for TCD installer
+5. Fresh-machine install test
+
+### Known Required Libraries
+
+Current working system links TCD against:
+
+- /usr/local/lib/libimbe_vocoder.so
+- /usr/local/lib/libftd2xx.so
+
+install-tcd.sh currently checks for these libraries and fails clearly if missing.
+
+Future work should add installation or guided setup for:
+
+- IMBE vocoder library
+- FTDI D2XX library
+
+### Current Status
+
+URFD and TCD are now included in the installer flow.
+
+The project direction is confirmed as:
+
+    Full reflector appliance installer
+
+not merely:
+
+    Dashboard/support tooling installer
+
