@@ -24,6 +24,8 @@ echo
 
 "$ROOT/scripts/install-imbe-vocoder.sh"
 
+"$ROOT/scripts/install-ftdi-d2xx.sh"
+
 "$ROOT/scripts/install-tcd.sh"
 
 "$ROOT/scripts/install-urfd-tcd-service.sh"
