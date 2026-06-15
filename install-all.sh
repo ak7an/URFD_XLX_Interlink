@@ -22,6 +22,8 @@ echo
 
 "$ROOT/scripts/install-urfd.sh"
 
+"$ROOT/scripts/install-imbe-vocoder.sh"
+
 "$ROOT/scripts/install-tcd.sh"
 
 "$ROOT/scripts/install-urfd-tcd-service.sh"
