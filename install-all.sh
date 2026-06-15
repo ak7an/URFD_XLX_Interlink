@@ -22,6 +22,8 @@ echo
 
 "$ROOT/scripts/install-urfd.sh"
 
+"$ROOT/scripts/install-tcd.sh"
+
 "$ROOT/scripts/install-urfd-tcd-service.sh"
 
 "$ROOT/scripts/install-dashboard-config.sh"
