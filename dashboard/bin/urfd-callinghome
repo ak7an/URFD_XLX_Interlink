@@ -160,7 +160,7 @@ $hashFile = $conf['CALLING_HOME_HASH_FILE'] ?? '/var/lib/urfd/callinghome.hash';
 $lastFile = $conf['CALLING_HOME_LAST_FILE'] ?? '/var/lib/urfd/lastcallhome';
 $interlinkFile = $conf['CALLING_HOME_INTERLINK_FILE'] ?? '/usr/local/etc/urfd.interlink';
 
-$reflectorName = $urfd['Names.Callsign'] ?? ($urfd['Callsign'] ?? '');
+$reflectorName = $conf['CALLING_HOME_REFLECTOR_NAME'] ?? ($urfd['Names.Callsign'] ?? ($urfd['Callsign'] ?? ''));
 $dashboardUrl = $conf['CALLING_HOME_DASHBOARD_URL'] ?? ($urfd['Names.DashboardUrl'] ?? ($urfd['DashboardUrl'] ?? ''));
 $country = $conf['CALLING_HOME_COUNTRY'] ?? ($urfd['Names.Country'] ?? ($urfd['Country'] ?? ''));
 $comment = $conf['CALLING_HOME_COMMENT'] ?? ($urfd['Names.Sponsor'] ?? ($urfd['Sponsor'] ?? ''));
