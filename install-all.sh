@@ -20,6 +20,10 @@ echo
 
 "$ROOT/scripts/install-deps.sh"
 
+"$ROOT/scripts/install-urfd.sh"
+
+"$ROOT/scripts/install-urfd-tcd-service.sh"
+
 "$ROOT/scripts/install-dashboard-config.sh"
 
 "$ROOT/scripts/install-dashboard.sh"
