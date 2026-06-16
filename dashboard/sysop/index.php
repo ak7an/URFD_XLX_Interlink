@@ -101,6 +101,23 @@ function state_class($state)
     return ($state === "active" || $state === "ready" || $state === "online") ? "good" : "bad";
 }
 
+function dashboard_logo()
+{
+    $conf = '/etc/urfd-dashboard/dashboard.conf';
+
+    if (!is_readable($conf)) {
+        return '';
+    }
+
+    foreach (file($conf, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        if (strpos($line, 'DASHBOARD_LOGO=') === 0) {
+            return trim(substr($line, 15));
+        }
+    }
+
+    return '';
+}
+
 function read_dashboard_config()
 {
     $conf = '/etc/urfd-dashboard/dashboard.conf';
@@ -162,6 +179,7 @@ $combinedSvc = 'urfd-tcd.service';
 
 $hostname = gethostname();
 $time = date('Y-m-d H:i:s T');
+$dashboardLogo = dashboard_logo();
 
 $combinedState = service_state($combinedSvc);
 $urfdState = process_state('/home/ed/urfd/reflector/urfd');
@@ -223,12 +241,30 @@ main{padding:20px;}
 table{border-collapse:collapse;}
 td,th{padding:8px 15px;text-align:left;}
 th{border-bottom:1px solid #2d425c;}
+
+.logo{
+position:absolute;
+top:15px;
+right:25px;
+}
+
+.logo img{
+max-height:90px;
+max-width:220px;
+}
 </style>
 </head>
 <body>
 
-<header>
+<header style="position:relative;">
 <h1>URF277 Sysop Dashboard</h1>
+
+<?php if ($dashboardLogo !== ''): ?>
+<div class="logo">
+<img src="<?= htmlspecialchars($dashboardLogo) ?>" alt="Dashboard Logo">
+</div>
+<?php endif; ?>
+
 </header>
 
 <main>

@@ -25,6 +25,9 @@ if ! timedatectl list-timezones | grep -qx "$DASHBOARD_TZ"; then
 fi
 
 echo
+read -r -p "Dashboard logo URL or local path [none]: " DASHBOARD_LOGO
+
+echo
 echo "===== XLX Calling Home / Directory Publishing ====="
 echo "Default is disabled."
 echo "Enable only when ready for public XLX directory and host-file listing."
@@ -109,6 +112,7 @@ esac
 cat > /etc/urfd-dashboard/dashboard.conf <<EOF2
 # URFD Dashboard configuration
 TIMEZONE=$DASHBOARD_TZ
+DASHBOARD_LOGO=$DASHBOARD_LOGO
 
 # XLX Calling Home / Directory Publishing
 CALLING_HOME_ENABLED=$CALLING_HOME_ENABLED

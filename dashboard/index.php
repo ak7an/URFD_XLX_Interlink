@@ -29,6 +29,7 @@ function dashboard_timezone()
 $dashboardTimezone = dashboard_timezone();
 
 $time = date('Y-m-d H:i:s T');
+$dashboardLogo = dashboard_logo();
 $xmlFile = '/var/log/xlxd.xml';
 
 $stations = [];
@@ -93,6 +94,23 @@ if (is_readable($xmlFile)) {
             'protocol' => trim($proto[1] ?? '')
         ];
     }
+}
+
+function dashboard_logo()
+{
+    $conf = '/etc/urfd-dashboard/dashboard.conf';
+
+    if (!is_readable($conf)) {
+        return '';
+    }
+
+    foreach (file($conf, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        if (strpos($line, 'DASHBOARD_LOGO=') === 0) {
+            return trim(substr($line, 15));
+        }
+    }
+
+    return '';
 }
 
 function nice_time($zulu)
@@ -191,14 +209,32 @@ main{padding:20px;}
 table{width:100%;border-collapse:collapse;}
 th,td{padding:10px;border-bottom:1px solid #2d425c;text-align:left;}
 .small{color:#a0a0a0;font-size:0.9em;}
+
+.logo{
+position:absolute;
+top:15px;
+right:25px;
+}
+
+.logo img{
+max-height:90px;
+max-width:220px;
+}
 </style>
 </head>
 
 <body>
 
-<header>
+<header style="position:relative;">
 <h1>URF277 Reflector Dashboard</h1>
 <div class="small">xlx277.bitbybithams.com / urfd</div>
+
+<?php if ($dashboardLogo !== ''): ?>
+<div class="logo">
+<img src="<?= htmlspecialchars($dashboardLogo) ?>" alt="Dashboard Logo">
+</div>
+<?php endif; ?>
+
 </header>
 
 <main>
