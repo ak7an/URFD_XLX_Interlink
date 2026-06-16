@@ -1972,3 +1972,121 @@ Fully operational URFD reflector with:
 - Systemd services
 
 without manual intervention.
+
+---
+
+## Checkpoint: Public Dashboard Enhancements
+
+Date: 2026-06-16
+
+### Linked Repeaters / Nodes Section
+
+Added new public dashboard section:
+
+    Linked Repeaters / Nodes
+
+Purpose:
+
+Provide visibility into currently connected repeaters,
+gateways, hotspots, and client nodes separately from
+reflector-to-reflector links.
+
+Dashboard layout now:
+
+- Reflector Status
+- Protocol Status
+- Linked Systems
+- Last Heard
+- Linked Repeaters / Nodes
+- Recent Node Activity
+
+Displayed fields:
+
+- Callsign
+- Protocol
+- Module
+- IP Address (masked)
+- Last Heard
+
+### IP Address Privacy
+
+Node IP addresses are no longer displayed in full.
+
+Current format:
+
+    *.*.37.195
+    *.*.135.17
+
+Purpose:
+
+- Distinguish nodes
+- Preserve operational visibility
+- Avoid exposing full public IP addresses
+
+### Node Activity Sorting
+
+Linked Repeaters / Nodes table now sorts by:
+
+    LastHeardTime descending
+
+Result:
+
+Most recently active nodes appear first.
+
+Benefits:
+
+- Easier monitoring
+- Active systems immediately visible
+- Better operational awareness
+
+### QRZ Callsign Integration
+
+Added clickable callsign links.
+
+Applies to:
+
+- Last Heard
+- Linked Repeaters / Nodes
+- Active Streams
+
+Behavior:
+
+Clicking a callsign opens:
+
+    https://www.qrz.com/db/<CALLSIGN>
+
+Callsign normalization added for:
+
+- D-Star style callsigns
+- Callsigns containing module suffixes
+- Callsigns containing slash-delimited device names
+
+Examples:
+
+    AK7AN B
+    AK7AN / ID31
+
+correctly resolve to:
+
+    AK7AN
+
+for QRZ lookup purposes.
+
+### Public Dashboard Status
+
+Current Public Dashboard Features:
+
+- Reflector Status
+- Protocol Status
+- Linked Systems
+- Last Heard
+- RadioID Operator Name Lookup
+- QRZ Callsign Lookup Links
+- Linked Repeaters / Nodes
+- Recent Node Activity
+- Auto Refresh
+
+Status:
+
+Feature complete and operational.
+

@@ -61,6 +61,7 @@ if (is_readable($xmlFile)) {
         preg_match('/<Callsign>(.*?)<\/Callsign>/s', $block, $cs);
         preg_match('/<LinkedModule>(.*?)<\/LinkedModule>/s', $block, $module);
         preg_match('/<Protocol>(.*?)<\/Protocol>/s', $block, $proto);
+        preg_match('/<IP>(.*?)<\/IP>/s', $block, $ip);
         preg_match('/<LastHeardTime>(.*?)<\/LastHeardTime>/s', $block, $lh);
 
         $lastheard = trim($lh[1] ?? '');
@@ -70,10 +71,15 @@ if (is_readable($xmlFile)) {
             'callsign' => trim($cs[1] ?? ''),
             'module' => trim($module[1] ?? ''),
             'protocol' => trim($proto[1] ?? ''),
+            'ip' => trim($ip[1] ?? ''),
             'lastheard' => $lastheard,
             'active' => ($lastTs > 0 && (time() - $lastTs) <= $activeWindowSeconds)
         ];
     }
+
+    usort($nodes, function ($a, $b) {
+        return strtotime($b['lastheard']) <=> strtotime($a['lastheard']);
+    });
 
     preg_match_all('/<PEER>(.*?)<\/PEER>/s', $raw, $peerBlocks);
     foreach ($peerBlocks[1] as $block) {
@@ -95,6 +101,40 @@ function nice_time($zulu)
     $ts = strtotime($zulu);
     if (!$ts) return $zulu;
     return date('Y-m-d H:i', $ts);
+}
+
+
+
+function qrz_callsign($callsign)
+{
+    $raw = strtoupper(trim($callsign));
+    if ($raw === '') return '';
+
+    // D-Star node callsigns may look like "AK7AN   B" or "AK7AN / ID31".
+    $base = preg_split('/[\s\/]+/', $raw)[0] ?? '';
+    $base = preg_replace('/[^A-Z0-9]/', '', $base);
+
+    if ($base === '') {
+        return htmlspecialchars($callsign);
+    }
+
+    $url = 'https://www.qrz.com/db/' . rawurlencode($base);
+    return '<a href="' . htmlspecialchars($url) . '" target="_blank" rel="noopener noreferrer">' .
+           htmlspecialchars($callsign) .
+           '</a>';
+}
+
+function masked_ip_tail($ip)
+{
+    $ip = trim($ip);
+    if ($ip === '') return '';
+
+    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        $parts = explode('.', $ip);
+        return '*.*.' . $parts[2] . '.' . $parts[3];
+    }
+
+    return 'hidden';
 }
 
 function lookup_operator($callsign)
@@ -218,7 +258,7 @@ th,td{padding:10px;border-bottom:1px solid #2d425c;text-align:left;}
 <?php foreach ($stations as $st): ?>
 <tr>
 <td><?= htmlspecialchars(nice_time($st['lastheard'])) ?></td>
-<td><?= htmlspecialchars($st['callsign']) ?></td>
+<td><?= qrz_callsign($st['callsign']) ?></td>
 <td><?= htmlspecialchars(lookup_operator($st['callsign'])) ?></td>
 <td><?= htmlspecialchars($st['via']) ?></td>
 <td><?= htmlspecialchars($st['module']) ?></td>
@@ -227,6 +267,35 @@ th,td{padding:10px;border-bottom:1px solid #2d425c;text-align:left;}
 <?php endforeach; ?>
 <?php else: ?>
 <tr><td colspan="6" class="idle">No last-heard stations found.</td></tr>
+<?php endif; ?>
+
+</table>
+</div>
+
+
+<div class="card">
+<h2>Linked Repeaters / Nodes</h2>
+<table>
+<tr>
+<th>Callsign</th>
+<th>Protocol</th>
+<th>Module</th>
+<th>IP</th>
+<th>Last Heard</th>
+</tr>
+
+<?php if (count($nodes) > 0): ?>
+<?php foreach ($nodes as $node): ?>
+<tr>
+<td><?= qrz_callsign($node['callsign']) ?></td>
+<td><?= htmlspecialchars($node['protocol']) ?></td>
+<td><?= htmlspecialchars($node['module']) ?></td>
+<td><?= htmlspecialchars(masked_ip_tail($node['ip'])) ?></td>
+<td><?= htmlspecialchars(nice_time($node['lastheard'])) ?></td>
+</tr>
+<?php endforeach; ?>
+<?php else: ?>
+<tr><td colspan="5" class="idle">No linked repeaters or nodes found.</td></tr>
 <?php endif; ?>
 
 </table>
@@ -250,7 +319,7 @@ foreach ($nodes as $node):
     $activeFound = true;
 ?>
 <tr>
-<td><?= htmlspecialchars($node['callsign']) ?></td>
+<td><?= qrz_callsign($node['callsign']) ?></td>
 <td><?= htmlspecialchars($node['protocol']) ?></td>
 <td><?= htmlspecialchars($node['module']) ?></td>
 <td><?= htmlspecialchars(nice_time($node['lastheard'])) ?></td>
