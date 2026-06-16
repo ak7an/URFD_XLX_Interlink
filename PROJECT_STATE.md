@@ -1721,3 +1721,254 @@ not merely:
 
     Dashboard/support tooling installer
 
+### Raspberry Pi 3B+ Full Installer Validation
+
+Date: 2026-06-15
+
+Objective:
+
+Validate that a completely clean Debian 13 Raspberry Pi installation
+can deploy URFD_XLX_Interlink using only:
+
+    sudo ./install-all.sh
+
+without requiring manual dependency discovery.
+
+Hardware:
+
+- Raspberry Pi 3B+
+- 1 GB RAM
+- USB SSD boot device
+- Debian 13 (Trixie) arm64
+
+System baseline:
+
+Hostname:
+    reflector
+
+Operating System:
+    Debian GNU/Linux 13 (trixie)
+
+Kernel:
+    6.18.29+rpt-rpi-v8
+
+Architecture:
+    arm64
+
+Memory:
+    905 MB RAM
+
+Storage:
+    117 GB root filesystem
+
+Initial cleanup validation:
+
+Verified system contained no:
+
+- URFD
+- TCD
+- XLX
+- DVSwitch
+- MMDVM
+- AllStar
+- Asterisk
+- Monit reflector services
+
+System effectively represented a clean installation target.
+
+SSH recovery:
+
+Lost SSH credentials after extended inactivity.
+
+Recovery process:
+
+- Mounted Pi SSD on development workstation
+- Verified hostname and users
+- Verified ssh.service enabled
+- Examined shadow password database
+- Reset user password offline
+- Restored SSH access
+
+Validated:
+
+    ssh ed@reflector.local
+
+successfully authenticated.
+
+Installer validation findings:
+
+Issue #1
+
+Missing package:
+
+    nlohmann-json3-dev
+
+Failure:
+
+    nlohmann/json.hpp not found
+
+Resolution:
+
+Install:
+
+    nlohmann-json3-dev
+
+Future action:
+
+Add to install-deps.sh
+
+Issue #2
+
+DHT dependency failure:
+
+    opendht.h not found
+
+Cause:
+
+Default config:
+
+    DHT = true
+
+in reflector/urfd.mk
+
+Resolution:
+
+Changed:
+
+    DHT = false
+
+Future action:
+
+Installer should disable DHT automatically
+or install OpenDHT dependencies.
+
+Issue #3
+
+Missing CURL development headers.
+
+Failure:
+
+    curl/curl.h not found
+
+Resolution:
+
+Install:
+
+    libcurl4-openssl-dev
+
+Future action:
+
+Add to install-deps.sh
+
+Issue #4
+
+Configuration files expected in:
+
+    reflector/
+
+but repository stores canonical copies under:
+
+    config/
+
+Failure:
+
+    install: cannot stat reflector/urfd.ini
+
+Resolution during test:
+
+Copied:
+
+    config/urfd.ini
+    config/urfd.interlink
+    config/urfd.blacklist
+    config/urfd.whitelist
+
+into reflector/
+
+Future action:
+
+install-urfd.sh should source configuration
+files directly from config/.
+
+Issue #5
+
+IMBE installer validation failure.
+
+Observed:
+
+imbe_vocoder cloned and compiled successfully.
+
+Installed:
+
+    /usr/local/lib/libimbe_vocoder.a
+
+Installer expected:
+
+    libimbe_vocoder.so
+
+Result:
+
+    [FAIL] libimbe_vocoder not found after install
+
+Cause:
+
+ARM build generated static library only.
+
+Future action:
+
+install-imbe-vocoder.sh and check-install.sh
+must accept either:
+
+    libimbe_vocoder.a
+    libimbe_vocoder.so
+
+Current status:
+
+Validated:
+
+- Installer framework launches correctly
+- Dependency discovery process working
+- URFD compiles successfully on Raspberry Pi arm64
+- inicheck builds successfully
+- dbutil builds successfully
+- IMBE vocoder compiles successfully
+- SSH recovery procedures documented
+
+Outstanding validation:
+
+- FTDI D2XX installation on ARM
+- TCD compilation on ARM
+- Combined URFD/TCD service deployment
+- Dashboard deployment validation
+- RadioID database installation
+- Calling Home timer validation
+- Final check-install.sh validation
+
+Project direction reaffirmed:
+
+Goal is now a true turnkey deployment system.
+
+Target outcome:
+
+Fresh Debian 13 installation
++
+git clone
++
+sudo ./install-all.sh
+
+Result:
+
+Fully operational URFD reflector with:
+
+- URFD
+- TCD
+- IMBE vocoder
+- FTDI D2XX
+- Dashboard
+- Sysop dashboard
+- RadioID database
+- Calling Home
+- Monit
+- Systemd services
+
+without manual intervention.
