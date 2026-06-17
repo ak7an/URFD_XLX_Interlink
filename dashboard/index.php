@@ -57,6 +57,37 @@ if (is_readable($xmlFile)) {
         ];
     }
 
+    // Display Last Heard as one row per operator callsign.
+    // If the same callsign appears through a different node or peer,
+    // keep only the newest heard entry and show that latest route.
+    $uniqueStations = [];
+
+    foreach ($stations as $st) {
+        $key = strtoupper(trim($st['callsign'] ?? ''));
+
+        // Normalize common D-Star / hotspot suffix forms.
+        $key = preg_split('/\s+\/\s+|\s+/', $key)[0] ?? $key;
+
+        if ($key === '') {
+            continue;
+        }
+
+        $newTs = strtotime($st['lastheard'] ?? '') ?: 0;
+        $oldTs = isset($uniqueStations[$key])
+            ? (strtotime($uniqueStations[$key]['lastheard'] ?? '') ?: 0)
+            : 0;
+
+        if (!isset($uniqueStations[$key]) || $newTs >= $oldTs) {
+            $uniqueStations[$key] = $st;
+        }
+    }
+
+    $stations = array_values($uniqueStations);
+
+    usort($stations, function ($a, $b) {
+        return strtotime($b['lastheard']) <=> strtotime($a['lastheard']);
+    });
+
     preg_match_all('/<NODE>(.*?)<\/NODE>/s', $raw, $nodeBlocks);
     foreach ($nodeBlocks[1] as $block) {
         preg_match('/<Callsign>(.*?)<\/Callsign>/s', $block, $cs);
@@ -246,7 +277,10 @@ color:#FFE866;
 
 <header>
 <h1>URF277 Reflector Dashboard</h1>
-<div class="small">xlx277.bitbybithams.com / urfd</div>
+<div class="small">
+Hosted by Bit By Bit Hams<br>
+<a href="https://www.bitbybithams.com" target="_blank">www.bitbybithams.com</a>
+</div>
 
 <?php if ($dashboardLogo !== ''): ?>
 <div class="logo">
