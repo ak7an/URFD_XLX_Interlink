@@ -199,9 +199,17 @@ function lookup_operator($callsign)
 
 <style>
 body{background:#0b1118;color:#ffffff;font-family:Arial,sans-serif;margin:0;}
-header{background:#162231;padding:20px;}
-main{padding:20px;}
-.card{background:#162231;border:1px solid #2d425c;border-radius:10px;padding:20px;margin-bottom:20px;max-width:1100px;}
+header{
+background:#162231;
+padding:10px 40px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:30px;
+box-sizing:border-box;
+}
+main{padding:20px 30px 40px 30px;}
+.card{background:#162231;border:1px solid #2d425c;border-radius:10px;padding:20px 30px 40px 30px;margin-bottom:20px;max-width:1100px;}
 .good{color:#66ff66;font-weight:bold;}
 .idle{color:#a0a0a0;}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
@@ -211,21 +219,32 @@ th,td{padding:10px;border-bottom:1px solid #2d425c;text-align:left;}
 .small{color:#a0a0a0;font-size:0.9em;}
 
 .logo{
-position:absolute;
-top:15px;
-right:25px;
+flex:0 0 auto;
 }
 
 .logo img{
-max-height:90px;
-max-width:220px;
+display:block;
+height:180px;
+width:auto;
+max-height:180px;
+max-width:360px;
 }
+
+a {
+color:#FFD700;
+font-weight:bold;
+}
+
+a:hover {
+color:#FFE866;
+}
+
 </style>
 </head>
 
 <body>
 
-<header style="position:relative;">
+<header>
 <h1>URF277 Reflector Dashboard</h1>
 <div class="small">xlx277.bitbybithams.com / urfd</div>
 

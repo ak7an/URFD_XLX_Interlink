@@ -233,9 +233,17 @@ $cpuTemp = cpu_temp();
 <title>URF277 Sysop Dashboard</title>
 <style>
 body{background:#0b1118;color:#fff;font-family:Arial,sans-serif;margin:0;}
-header{background:#162231;padding:20px;}
-main{padding:20px;}
-.card{background:#162231;border:1px solid #2d425c;border-radius:10px;padding:20px;margin-bottom:20px;max-width:900px;}
+header{
+background:#162231;
+padding:10px 40px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:30px;
+box-sizing:border-box;
+}
+main{padding:20px 30px 40px 30px;}
+.card{background:#162231;border:1px solid #2d425c;border-radius:10px;padding:20px 30px 40px 30px;margin-bottom:20px;max-width:900px;}
 .good{color:#66ff66;font-weight:bold;}
 .bad{color:#ff6666;font-weight:bold;}
 table{border-collapse:collapse;}
@@ -243,20 +251,21 @@ td,th{padding:8px 15px;text-align:left;}
 th{border-bottom:1px solid #2d425c;}
 
 .logo{
-position:absolute;
-top:15px;
-right:25px;
+flex:0 0 auto;
 }
 
 .logo img{
-max-height:90px;
-max-width:220px;
+display:block;
+height:180px;
+width:auto;
+max-height:180px;
+max-width:360px;
 }
 </style>
 </head>
 <body>
 
-<header style="position:relative;">
+<header>
 <h1>URF277 Sysop Dashboard</h1>
 
 <?php if ($dashboardLogo !== ''): ?>
