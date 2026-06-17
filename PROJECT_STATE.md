@@ -2225,3 +2225,166 @@ Status:
 
 Operational and deployed.
 
+
+-------------------------------------------------------------------------------
+
+## Checkpoint: Raspberry Pi Deployment Validation Complete
+
+Date: 2026-06-16
+
+Repository:
+URFD_XLX_Interlink
+
+Validation Platform:
+
+- Raspberry Pi 3B+
+- Debian 13 (trixie)
+- ARM64 (aarch64)
+
+Objective:
+
+Validate complete deployment using installer framework on a clean
+Raspberry Pi environment.
+
+Results:
+
+PASS: 53
+WARN: 3
+FAIL: 0
+
+Validated Components:
+
+Core Reflector:
+
+- URFD builds successfully on ARM64
+- URFD installs successfully
+- URFD service framework validated
+
+Transcoder:
+
+- TCD builds successfully on ARM64
+- TCD installs successfully
+- TCD service integration validated
+
+Vocoder Support:
+
+- IMBE vocoder builds successfully
+- FTDI D2XX installs successfully
+- ThumbDV detection validated
+
+Dual ThumbDV Validation:
+
+Detected devices:
+
+- D30G37BA
+- D30G37AJ
+
+Validated operation:
+
+- D-Star ThumbDV assigned
+- DMR/YSF/NXDN ThumbDV assigned
+- TCD successfully connects to URFD
+- Hybrid Transcoder starts successfully
+
+Reflector Validation:
+
+URFD successfully starts and listens on:
+
+- DPlus
+- DExtra
+- DCS
+- DMR
+- YSF
+- NXDN
+- P25
+- M17
+- G3
+- XLX Interlink
+
+Dashboard Validation:
+
+Validated:
+
+- Public Dashboard deployment
+- Sysop Dashboard deployment
+- XML status generation
+- Dashboard configuration
+- Dashboard branding support
+
+RadioID Validation:
+
+Validated:
+
+- SQLite database creation
+- Importer installation
+- Updater installation
+- Timer installation
+
+Monit Validation:
+
+Validated:
+
+- Monit installation
+- Monit web interface
+- Apache integration
+- Authentication support
+
+Calling Home Validation:
+
+Validated:
+
+- Publisher installation
+- Timer installation
+- Configuration framework
+
+Installer Issues Found During Validation:
+
+1. IMBE validation accepted only .so libraries
+
+Fixed:
+- Accept .so or .a
+
+2. TCD installer did not deploy tcd.mk
+
+Fixed:
+- Deploy tcd.mk
+- Deploy tcd.ini
+- Deploy tcd.service
+
+3. Dashboard timezone validation failure
+
+Fixed:
+- Accept valid zoneinfo entries
+
+4. OpenDHT dependency handling
+
+Decision:
+- OpenDHT remains optional
+- DHT disabled by default for installer deployments
+
+5. URFD deployment path assumptions
+
+Validated and corrected for installer deployment.
+
+GitHub:
+
+Commit:
+
+f85370e
+Fix Raspberry Pi ARM installer validation issues
+
+Project Status:
+
+Stable
+
+Installer Framework:
+
+Validated on Raspberry Pi ARM64.
+
+Current Priority:
+
+- Update RadioID database population workflow
+- Review Monit Apache detection warning
+- Optional HTTPS validation on fresh deployment
+- Continue Calling Home integration testing
+
