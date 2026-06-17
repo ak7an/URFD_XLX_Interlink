@@ -2090,3 +2090,138 @@ Status:
 
 Feature complete and operational.
 
+
+---
+
+## Checkpoint: Public Dashboard Enhancements
+
+Date: 2026-06-16
+
+### Linked Repeaters / Nodes
+
+Added new public dashboard section:
+
+    Linked Repeaters / Nodes
+
+Purpose:
+
+Provide visibility into connected repeaters,
+gateways, hotspots, and client nodes separately
+from reflector-to-reflector links.
+
+Displayed fields:
+
+- Callsign
+- Protocol
+- Module
+- Masked IP Address
+- Last Heard
+
+### Node Privacy
+
+Node IP addresses are masked.
+
+Display format:
+
+    *.*.37.195
+    *.*.135.17
+
+Purpose:
+
+- Preserve operational visibility
+- Avoid exposing full public IP addresses
+
+### Node Activity Sorting
+
+Linked Repeaters / Nodes table now sorts by:
+
+    LastHeardTime descending
+
+Benefits:
+
+- Most active systems appear first
+- Easier operational monitoring
+- Better visibility of current activity
+
+### QRZ Integration
+
+Added clickable callsign links.
+
+Applies to:
+
+- Last Heard
+- Linked Repeaters / Nodes
+- Active Streams
+
+Behavior:
+
+Callsigns open directly to:
+
+    https://www.qrz.com/db/<CALLSIGN>
+
+Callsign normalization supports:
+
+- D-Star callsigns
+- Callsigns with module suffixes
+- Callsigns containing slash-delimited device names
+
+Examples:
+
+    AK7AN B
+    AK7AN / ID31
+
+resolve correctly to:
+
+    AK7AN
+
+for QRZ lookups.
+
+### Dashboard Branding Support
+
+Added configurable dashboard logo support.
+
+Configuration:
+
+    DASHBOARD_LOGO=/assets/logo.png
+
+stored in:
+
+    /etc/urfd-dashboard/dashboard.conf
+
+Public and Sysop dashboards support optional
+custom branding logos.
+
+If no logo is configured, dashboards operate normally.
+
+Intended uses:
+
+- Club branding
+- Reflector branding
+- Organization logos
+- Custom deployments
+
+### Dashboard Visibility Improvements
+
+Updated hyperlink colors for improved visibility
+on dark dashboard themes.
+
+QRZ callsign links now display using high-contrast
+highlight colors for improved readability.
+
+### Current Public Dashboard Features
+
+- Reflector Status
+- Protocol Status
+- Linked Systems
+- Last Heard
+- RadioID Operator Lookup
+- QRZ Callsign Links
+- Linked Repeaters / Nodes
+- Recent Node Activity
+- Dashboard Branding Support
+- Auto Refresh
+
+Status:
+
+Operational and deployed.
+
