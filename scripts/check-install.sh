@@ -106,7 +106,7 @@ check_file "TCD config" "/usr/local/etc/tcd.ini"
 check_file "Combined URFD/TCD launcher" "/usr/local/bin/start-urfd-tcd.sh"
 check_file "Combined URFD/TCD service" "/etc/systemd/system/urfd-tcd.service"
 
-if ldconfig -p | grep -q 'libimbe_vocoder.so'; then
+if ldconfig -p | grep -q 'libimbe_vocoder.so' || [ -f /usr/local/lib/libimbe_vocoder.a ]; then
     check_pass "IMBE vocoder library available"
 else
     check_fail "IMBE vocoder library missing"

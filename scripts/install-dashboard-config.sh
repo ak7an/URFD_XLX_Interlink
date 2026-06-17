@@ -18,7 +18,7 @@ DEFAULT_TZ="${DEFAULT_TZ:-America/Denver}"
 read -r -p "Dashboard timezone [$DEFAULT_TZ]: " DASHBOARD_TZ
 DASHBOARD_TZ="${DASHBOARD_TZ:-$DEFAULT_TZ}"
 
-if ! timedatectl list-timezones | grep -qx "$DASHBOARD_TZ"; then
+if ! timedatectl list-timezones | grep -qx "$DASHBOARD_TZ" && [ ! -f "/usr/share/zoneinfo/$DASHBOARD_TZ" ]; then
     echo "[FAIL] Invalid timezone: $DASHBOARD_TZ"
     echo "Example: America/Denver"
     exit 1

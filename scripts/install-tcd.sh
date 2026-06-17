@@ -16,9 +16,12 @@ TCD_REPO="https://github.com/nostar/tcd.git"
 echo "URFD source: $ROOT"
 echo "TCD source:  $TCD_DIR"
 
-if ! ldconfig -p | grep -q 'libimbe_vocoder.so'; then
-    echo "[FAIL] Missing libimbe_vocoder.so"
+if ! ldconfig -p | grep -q 'libimbe_vocoder.so' && [[ ! -f /usr/local/lib/libimbe_vocoder.a ]]; then
+    echo "[FAIL] Missing libimbe_vocoder library"
     echo "Install the IMBE vocoder library before building TCD."
+    echo "Expected one of:"
+    echo "  /usr/local/lib/libimbe_vocoder.so"
+    echo "  /usr/local/lib/libimbe_vocoder.a"
     exit 1
 fi
 
@@ -40,6 +43,21 @@ if [ "$(readlink -f "$PARENT/urfd" 2>/dev/null || true)" != "$(readlink -f "$ROO
     echo "[WARN] Creating/refreshing symlink: $PARENT/urfd -> $ROOT"
     rm -f "$PARENT/urfd"
     ln -s "$ROOT" "$PARENT/urfd"
+fi
+
+if [ ! -f "$TCD_DIR/tcd.mk" ] && [ -f "$TCD_DIR/config/tcd.mk" ]; then
+    echo "[INFO] Installing default TCD build config: tcd.mk"
+    cp "$TCD_DIR/config/tcd.mk" "$TCD_DIR/tcd.mk"
+fi
+
+if [ ! -f "$TCD_DIR/tcd.ini" ] && [ -f "$TCD_DIR/config/tcd.ini" ]; then
+    echo "[INFO] Installing default TCD runtime config: tcd.ini"
+    cp "$TCD_DIR/config/tcd.ini" "$TCD_DIR/tcd.ini"
+fi
+
+if [ ! -f "$TCD_DIR/tcd.service" ] && [ -f "$TCD_DIR/config/tcd.service" ]; then
+    echo "[INFO] Installing default TCD service template: tcd.service"
+    cp "$TCD_DIR/config/tcd.service" "$TCD_DIR/tcd.service"
 fi
 
 make -C "$TCD_DIR" clean
