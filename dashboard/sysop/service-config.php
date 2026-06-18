@@ -31,9 +31,18 @@ function known_ham_radio_services()
         'nxdngateway.service',
         'p25gateway.service',
         'ircddbgateway.service',
+        'dstargateway.service',
         'dstarrepeater.service',
         'mmdvmhost.service',
         'direwolf.service',
+        'svxlink.service',
+        'allstarlink.service',
+        'asterisk.service',
+        'aprx.service',
+        'ax25.service',
+        'pat.service',
+        'bpq32.service',
+        'linbpq.service',
     ];
 }
 

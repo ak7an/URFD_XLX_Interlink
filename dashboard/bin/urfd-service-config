@@ -15,16 +15,25 @@ display_name() {
         nxdngateway.service) echo "NXDNGateway" ;;
         p25gateway.service) echo "P25Gateway" ;;
         ircddbgateway.service) echo "ircDDBGateway" ;;
+        dstargateway.service) echo "DStarGateway" ;;
         dstarrepeater.service) echo "DStarRepeater" ;;
         mmdvmhost.service) echo "MMDVMHost" ;;
         direwolf.service) echo "Dire Wolf" ;;
+        svxlink.service) echo "SvxLink" ;;
+        allstarlink.service) echo "AllStarLink" ;;
+        asterisk.service) echo "AllStar Asterisk" ;;
+        aprx.service) echo "APRX" ;;
+        ax25.service) echo "AX25" ;;
+        pat.service) echo "PAT Winlink" ;;
+        bpq32.service) echo "BPQ Node" ;;
+        linbpq.service) echo "LinBPQ Node" ;;
         *) return 1 ;;
     esac
 }
 
 valid_unit() {
     case "$1" in
-        mmdvm_bridge.service|analog_bridge.service|md380-emu.service|dvswitch.service|ysfgateway.service|nxdngateway.service|p25gateway.service|ircddbgateway.service|dstarrepeater.service|mmdvmhost.service|direwolf.service)
+        mmdvm_bridge.service|analog_bridge.service|md380-emu.service|dvswitch.service|ysfgateway.service|nxdngateway.service|p25gateway.service|ircddbgateway.service|dstargateway.service|dstarrepeater.service|mmdvmhost.service|direwolf.service|svxlink.service|allstarlink.service|asterisk.service|aprx.service|ax25.service|pat.service|bpq32.service|linbpq.service)
             return 0
             ;;
         *)
@@ -122,7 +131,7 @@ case "$ACTION" in
             BEGIN { keep = 1; block = ""; service = "" }
             /^\[/ {
                 if (block != "") {
-                    if (service == "" || service !~ /^(mmdvm_bridge|analog_bridge|md380-emu|dvswitch|ysfgateway|nxdngateway|p25gateway|ircddbgateway|dstarrepeater|mmdvmhost|direwolf)\.service$/) {
+                    if (service == "" || service !~ /^(mmdvm_bridge|analog_bridge|md380-emu|dvswitch|ysfgateway|nxdngateway|p25gateway|ircddbgateway|dstargateway|dstarrepeater|mmdvmhost|direwolf|svxlink|allstarlink|asterisk|aprx|ax25|pat|bpq32|linbpq)\.service$/) {
                         printf "%s", block
                     }
                 }
@@ -138,7 +147,7 @@ case "$ACTION" in
             }
             END {
                 if (block != "") {
-                    if (service == "" || service !~ /^(mmdvm_bridge|analog_bridge|md380-emu|dvswitch|ysfgateway|nxdngateway|p25gateway|ircddbgateway|dstarrepeater|mmdvmhost|direwolf)\.service$/) {
+                    if (service == "" || service !~ /^(mmdvm_bridge|analog_bridge|md380-emu|dvswitch|ysfgateway|nxdngateway|p25gateway|ircddbgateway|dstargateway|dstarrepeater|mmdvmhost|direwolf|svxlink|allstarlink|asterisk|aprx|ax25|pat|bpq32|linbpq)\.service$/) {
                         printf "%s", block
                     }
                 }

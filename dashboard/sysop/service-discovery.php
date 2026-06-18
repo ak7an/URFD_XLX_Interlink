@@ -51,9 +51,18 @@ function discover_ham_radio_services()
         'NXDNGateway'    => 'nxdngateway.service',
         'P25Gateway'     => 'p25gateway.service',
         'ircDDBGateway'  => 'ircddbgateway.service',
+        'DStarGateway'   => 'dstargateway.service',
         'DStarRepeater'  => 'dstarrepeater.service',
         'MMDVMHost'      => 'mmdvmhost.service',
         'Dire Wolf'      => 'direwolf.service',
+        'SvxLink'        => 'svxlink.service',
+        'AllStarLink'    => 'allstarlink.service',
+        'AllStar Asterisk' => 'asterisk.service',
+        'APRX'           => 'aprx.service',
+        'AX25'           => 'ax25.service',
+        'PAT Winlink'    => 'pat.service',
+        'BPQ Node'       => 'bpq32.service',
+        'LinBPQ Node'    => 'linbpq.service',
     ];
 
     $unitFiles = shell_exec('systemctl list-unit-files --type=service --no-legend 2>/dev/null');
