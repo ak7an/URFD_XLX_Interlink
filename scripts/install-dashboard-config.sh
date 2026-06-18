@@ -70,6 +70,9 @@ EOF2
 
 a2enconf urfd-sysop-auth >/dev/null
 
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+install -m 755 "$ROOT/scripts/urfd-sysop-user" /usr/local/bin/urfd-sysop-user
+
 
 echo
 echo "===== XLX Calling Home / Directory Publishing ====="
