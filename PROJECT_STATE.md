@@ -2388,3 +2388,174 @@ Current Priority:
 - Optional HTTPS validation on fresh deployment
 - Continue Calling Home integration testing
 
+
+---
+
+## Checkpoint: Native Sysop Service Controls and Monit Replacement
+
+Date: 2026-06-18
+
+Objective:
+
+Replace Monit-based service action controls with native Sysop Dashboard
+service controls that are secure, installer-supported, and simple for
+sysops to use.
+
+Project Direction:
+
+Monit is no longer required for the supported service-control workflow.
+
+The Sysop Dashboard now provides native service controls directly.
+
+Core Reflector Controls:
+
+Added dedicated Sysop Dashboard control for:
+
+- URFD/TCD restart
+
+Implemented with:
+
+- CSRF protection
+- POST-only service actions
+- Allowlisted service names
+- Restricted sudo helper
+- Action logging
+
+Files added:
+
+- dashboard/sysop/service-control.php
+- dashboard/bin/urfd-service-control
+- scripts/install-service-controls.sh
+
+Installed runtime files:
+
+- /usr/local/bin/urfd-service-control
+- /etc/sudoers.d/urfd-dashboard-service-control
+- /var/log/urfd-dashboard-actions.log
+
+Security Model:
+
+Dashboard PHP does not run arbitrary commands.
+
+The dashboard may only call root-owned helper scripts through a narrow
+sudoers policy.
+
+The helper only accepts allowlisted services.
+
+Service actions are logged to:
+
+    /var/log/urfd-dashboard-actions.log
+
+Custom Service Controls:
+
+Added configurable custom service controls backed by:
+
+    /etc/urfd-dashboard/service-controls.conf
+
+Config format:
+
+    [Display Name]
+    service=systemd-unit.service
+
+Example:
+
+    [YSFGateway]
+    service=ysfgateway.service
+
+    [Dire Wolf]
+    service=direwolf.service
+
+The dashboard reads this file and automatically displays restart buttons
+for configured services.
+
+Sysops may manually add non-ham-radio services by editing this file.
+
+Ham Radio Service Discovery:
+
+Added popup-based service discovery workflow.
+
+Sysop Dashboard now includes:
+
+    Find Ham Radio Services
+
+Behavior:
+
+- Opens service-discovery.php in a popup window
+- Scans installed systemd service units
+- Shows known ham radio stack services as checkboxes
+- Checked services appear on the Sysop Dashboard
+- Unchecked services are removed from dashboard display
+- Save Changes updates service-controls.conf
+- Popup closes automatically
+- Parent dashboard refreshes automatically
+
+Files added:
+
+- dashboard/sysop/service-discovery.php
+- dashboard/sysop/service-config.php
+- dashboard/bin/urfd-service-config
+
+Known discovered services include:
+
+- MMDVM_Bridge
+- Analog_Bridge
+- MD380 Emulator
+- DVSwitch
+- YSFGateway
+- NXDNGateway
+- P25Gateway
+- ircDDBGateway
+- DStarRepeater
+- MMDVMHost
+- Dire Wolf
+
+Important behavior:
+
+The discovery workflow only manages known ham radio services.
+
+Manual non-ham entries in service-controls.conf are preserved when
+Save Changes is used.
+
+Installer Integration:
+
+install-all.sh now installs native service controls through:
+
+    scripts/install-service-controls.sh
+
+check-install.sh now validates:
+
+- Service control helper
+- Service config helper
+- sudoers policy
+- action log
+- sysop control endpoint
+- custom service controls config
+
+Monit installer/check path was removed from the required install flow.
+
+Validation:
+
+Live validation completed successfully.
+
+Results:
+
+    PASS: 58
+    WARN: 0
+    FAIL: 0
+
+Validated actions:
+
+- URFD/TCD restart from Sysop Dashboard
+- YSFGateway restart from Sysop Dashboard
+- NXDNGateway restart from Sysop Dashboard
+- Custom service discovery
+- Checkbox add/remove workflow
+- Popup close and parent dashboard refresh
+- Action logging
+
+Current Status:
+
+Native Sysop Service Controls are feature-complete for current release.
+
+Monit is no longer part of the required production architecture.
+

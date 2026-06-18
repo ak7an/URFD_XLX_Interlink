@@ -28,6 +28,14 @@ if [ -f "$WEBROOT/bin/urfd-callinghome" ]; then
     install -m 755 "$WEBROOT/bin/urfd-callinghome" /usr/local/bin/urfd-callinghome
 fi
 
+if [ -f "$WEBROOT/bin/urfd-service-control" ]; then
+    chmod 755 "$WEBROOT/bin/urfd-service-control"
+fi
+
+if [ -f "$WEBROOT/bin/urfd-service-config" ]; then
+    chmod 755 "$WEBROOT/bin/urfd-service-config"
+fi
+
 echo
 echo "[PASS] Dashboard installed"
 echo "Location: $WEBROOT"

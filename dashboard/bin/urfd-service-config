@@ -1,0 +1,170 @@
+#!/bin/sh
+set -eu
+
+ACTION="${1:-}"
+CONF="/etc/urfd-dashboard/service-controls.conf"
+LOG="/var/log/urfd-dashboard-actions.log"
+
+display_name() {
+    case "$1" in
+        mmdvm_bridge.service) echo "MMDVM_Bridge" ;;
+        analog_bridge.service) echo "Analog_Bridge" ;;
+        md380-emu.service) echo "MD380 Emulator" ;;
+        dvswitch.service) echo "DVSwitch" ;;
+        ysfgateway.service) echo "YSFGateway" ;;
+        nxdngateway.service) echo "NXDNGateway" ;;
+        p25gateway.service) echo "P25Gateway" ;;
+        ircddbgateway.service) echo "ircDDBGateway" ;;
+        dstarrepeater.service) echo "DStarRepeater" ;;
+        mmdvmhost.service) echo "MMDVMHost" ;;
+        direwolf.service) echo "Dire Wolf" ;;
+        *) return 1 ;;
+    esac
+}
+
+valid_unit() {
+    case "$1" in
+        mmdvm_bridge.service|analog_bridge.service|md380-emu.service|dvswitch.service|ysfgateway.service|nxdngateway.service|p25gateway.service|ircddbgateway.service|dstarrepeater.service|mmdvmhost.service|direwolf.service)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+log_action() {
+    printf '%s service-config action=%s unit=%s result=%s\n' \
+        "$(date '+%Y-%m-%d %H:%M:%S %Z')" \
+        "$ACTION" \
+        "${1:-none}" \
+        "${2:-unknown}" >> "$LOG" 2>/dev/null || true
+}
+
+is_known_ham_service() {
+    valid_unit "$1"
+}
+
+validate_installed_unit() {
+    UNIT="$1"
+
+    case "$UNIT" in
+        *.service) ;;
+        *)
+            log_action "$UNIT" "invalid-unit"
+            echo "Invalid unit: $UNIT" >&2
+            exit 1
+            ;;
+    esac
+
+    if ! valid_unit "$UNIT"; then
+        log_action "$UNIT" "not-allowlisted"
+        echo "Service not allowlisted: $UNIT" >&2
+        exit 1
+    fi
+
+    if ! systemctl list-unit-files --type=service --no-legend 2>/dev/null | awk '{print $1}' | grep -Fxq "$UNIT"; then
+        log_action "$UNIT" "not-installed"
+        echo "Service not installed: $UNIT" >&2
+        exit 1
+    fi
+}
+
+install -d -m 755 /etc/urfd-dashboard
+touch "$CONF"
+chmod 644 "$CONF"
+
+touch "$LOG"
+chown www-data:adm "$LOG" 2>/dev/null || true
+chmod 640 "$LOG" 2>/dev/null || true
+
+case "$ACTION" in
+    add)
+        shift || true
+
+        ADDED=0
+
+        for UNIT in "$@"; do
+            validate_installed_unit "$UNIT"
+
+            if grep -q "^service=${UNIT}$" "$CONF"; then
+                log_action "$UNIT" "already-configured"
+                continue
+            fi
+
+            NAME="$(display_name "$UNIT")"
+
+            {
+                echo
+                echo "[$NAME]"
+                echo "service=$UNIT"
+            } >> "$CONF"
+
+            log_action "$UNIT" "added"
+            ADDED=$((ADDED+1))
+        done
+
+        echo "Added $ADDED service(s)"
+        ;;
+
+    save)
+        shift || true
+
+        TMP="$(mktemp)"
+        trap 'rm -f "$TMP"' EXIT
+
+        for UNIT in "$@"; do
+            validate_installed_unit "$UNIT"
+        done
+
+        # Preserve manual entries that are not part of the known ham-radio discovery list.
+        awk '
+            BEGIN { keep = 1; block = ""; service = "" }
+            /^\[/ {
+                if (block != "") {
+                    if (service == "" || service !~ /^(mmdvm_bridge|analog_bridge|md380-emu|dvswitch|ysfgateway|nxdngateway|p25gateway|ircddbgateway|dstarrepeater|mmdvmhost|direwolf)\.service$/) {
+                        printf "%s", block
+                    }
+                }
+                block = $0 "\n"
+                service = ""
+                next
+            }
+            {
+                block = block $0 "\n"
+                if ($0 ~ /^service=/) {
+                    service = substr($0, 9)
+                }
+            }
+            END {
+                if (block != "") {
+                    if (service == "" || service !~ /^(mmdvm_bridge|analog_bridge|md380-emu|dvswitch|ysfgateway|nxdngateway|p25gateway|ircddbgateway|dstarrepeater|mmdvmhost|direwolf)\.service$/) {
+                        printf "%s", block
+                    }
+                }
+            }
+        ' "$CONF" > "$TMP"
+
+        for UNIT in "$@"; do
+            NAME="$(display_name "$UNIT")"
+
+            {
+                echo
+                echo "[$NAME]"
+                echo "service=$UNIT"
+            } >> "$TMP"
+
+            log_action "$UNIT" "selected"
+        done
+
+        install -m 644 "$TMP" "$CONF"
+        echo "Saved selected services"
+        ;;
+
+    *)
+        echo "Invalid action" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

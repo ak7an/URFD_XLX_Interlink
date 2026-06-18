@@ -186,6 +186,38 @@ function read_custom_service_controls()
     return $services;
 }
 
+function ham_radio_service_discovery()
+{
+    $known = [
+        'MMDVM_Bridge'   => 'mmdvm_bridge.service',
+        'Analog_Bridge'  => 'analog_bridge.service',
+        'MD380 Emulator' => 'md380-emu.service',
+        'DVSwitch'       => 'dvswitch.service',
+        'YSFGateway'     => 'ysfgateway.service',
+        'NXDNGateway'    => 'nxdngateway.service',
+        'P25Gateway'     => 'p25gateway.service',
+        'ircDDBGateway'  => 'ircddbgateway.service',
+        'DStarRepeater'  => 'dstarrepeater.service',
+        'MMDVMHost'      => 'mmdvmhost.service',
+        'Dire Wolf'      => 'direwolf.service',
+    ];
+
+    $unitFiles = shell_exec('systemctl list-unit-files --type=service --no-legend 2>/dev/null');
+    $found = [];
+
+    foreach ($known as $name => $unit) {
+        if ($unitFiles && preg_match('/^' . preg_quote($unit, '/') . '\s+/m', $unitFiles)) {
+            $found[] = [
+                'name' => $name,
+                'unit' => $unit,
+                'state' => service_state($unit),
+            ];
+        }
+    }
+
+    return $found;
+}
+
 function file_status($path)
 {
     if ($path === '') {
@@ -430,6 +462,16 @@ max-width:360px;
 <?php endforeach; ?>
 </table>
 <?php endif; ?>
+
+<p>
+<a href="service-discovery.php"
+   target="serviceDiscovery"
+   onclick="window.open(this.href,'serviceDiscovery','width=900,height=700,scrollbars=yes'); return false;"
+   style="color:#66ccff;font-weight:bold;">
+Find Ham Radio Services
+</a>
+</p>
+
 </div>
 
 <div class="card">

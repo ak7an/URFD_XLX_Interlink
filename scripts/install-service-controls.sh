@@ -7,8 +7,13 @@ install -m 755 \
     dashboard/bin/urfd-service-control \
     /usr/local/bin/urfd-service-control
 
+install -m 755 \
+    dashboard/bin/urfd-service-config \
+    /usr/local/bin/urfd-service-config
+
 cat > /etc/sudoers.d/urfd-dashboard-service-control <<'EOF'
 www-data ALL=(root) NOPASSWD: /usr/local/bin/urfd-service-control
+www-data ALL=(root) NOPASSWD: /usr/local/bin/urfd-service-config
 EOF
 
 chmod 440 /etc/sudoers.d/urfd-dashboard-service-control
@@ -23,5 +28,6 @@ chmod 640 /var/log/urfd-dashboard-actions.log
 
 echo "Installed:"
 echo "  /usr/local/bin/urfd-service-control"
+echo "  /usr/local/bin/urfd-service-config"
 echo "  /etc/sudoers.d/urfd-dashboard-service-control"
 echo "  /var/log/urfd-dashboard-actions.log"

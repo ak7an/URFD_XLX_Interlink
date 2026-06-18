@@ -1,6 +1,6 @@
 # URFD_XLX_Interlink
 
-URFD_XLX_Interlink is an enhanced URFD-based amateur radio reflector platform that combines reflector services, XLX interlinking, modern dashboard capabilities, RadioID integration, deployment automation, and remote maintenance tools.
+URFD_XLX_Interlink is an enhanced URFD-based amateur radio reflector platform that combines reflector services, XLX interlinking, modern dashboard capabilities, RadioID integration, deployment automation, and native sysop service controls.
 
 The goal of the project is to provide a reflector platform that can be deployed and managed by a sysop with minimal manual configuration while maintaining compatibility with existing URFD and XLX ecosystems.
 
@@ -46,8 +46,11 @@ Features include:
 - Transcoder status
 - DVSI dongle status
 - Server health monitoring
-- Monit integration
-- Maintenance dashboard access
+- Native URFD/TCD restart control
+- Custom service controls
+- Ham radio service discovery
+- CSRF-protected service actions
+- Audit logging
 
 ### RadioID Integration
 
@@ -64,17 +67,28 @@ Provides:
 - Automated database updates
 - Local lookup performance
 
-### Monit Integration
+### Native Sysop Service Controls
 
-Integrated remote maintenance platform.
+Integrated service controls are provided directly through the Sysop Dashboard.
 
 Provides:
 
-- Service monitoring
-- Service restart capability
-- Resource monitoring
-- Remote sysop access
-- HTTPS protected management interface
+- Core URFD/TCD restart control
+- Configurable custom service controls
+- Ham radio service discovery popup
+- Checkbox-based service selection
+- Support for Dire Wolf and common DVSwitch/MMDVM gateway services
+- Root-owned helper scripts
+- Restricted sudo policy
+- CSRF protection
+- Action logging
+
+Custom service controls are stored in:
+
+    /etc/urfd-dashboard/service-controls.conf
+
+The discovery tool can populate common ham radio services automatically.
+Sysops may also manually add other local systemd services to the config file.
 
 ### Deployment Framework
 
@@ -84,7 +98,7 @@ Included tools:
 - install-deps.sh
 - install-dashboard.sh
 - install-dashboard-config.sh
-- install-monit.sh
+- install-service-controls.sh
 - setup-radioid-db.sh
 - install-radioid-tools.sh
 - install-radioid-timer.sh
@@ -103,7 +117,7 @@ Supported:
 - XLX interlinking
 - Dashboard integration
 - RadioID integration
-- Monit integration
+- Native sysop service controls
 - Deployment automation
 
 Not Supported:
@@ -138,8 +152,8 @@ The installer will:
 - Configure dashboards
 - Configure dashboard timezone
 - Configure RadioID integration
-- Configure Monit
-- Configure maintenance authentication
+- Configure native sysop service controls
+- Configure service-control sudo policy
 - Configure reflector options
 - Validate installation
 
@@ -159,7 +173,7 @@ Current features include:
 - HTTPS dashboard
 - Sysop dashboard
 - RadioID lookups
-- Monit service monitoring
+- Native sysop service controls
 - Automated deployment framework
 - Automated RadioID updates
 - Configurable dashboard timezone
@@ -181,7 +195,7 @@ Additional project work includes:
 - Custom sysop dashboard
 - RadioID integration
 - Deployment automation
-- Monit integration
+- Native sysop service controls
 - Installation tooling
 - Documentation
 
