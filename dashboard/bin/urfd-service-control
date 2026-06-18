@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+SERVICE="${1:-}"
+
+case "$SERVICE" in
+    urfd-tcd)
+        exec /bin/systemctl restart urfd-tcd.service
+        ;;
+    *)
+        echo "Invalid service" >&2
+        exit 1
+        ;;
+esac

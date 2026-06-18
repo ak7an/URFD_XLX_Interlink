@@ -1,5 +1,11 @@
 <?php
 
+session_start();
+
+if (empty($_SESSION['service_control_csrf'])) {
+    $_SESSION['service_control_csrf'] = bin2hex(random_bytes(32));
+}
+
 function dashboard_timezone()
 {
     $conf = '/etc/urfd-dashboard/dashboard.conf';
@@ -278,6 +284,18 @@ max-width:360px;
 
 <main>
 
+<?php if (isset($_GET['service_control_success'])): ?>
+<div class="card">
+<p class="good"><?= htmlspecialchars($_GET['service_control_success']) ?></p>
+</div>
+<?php endif; ?>
+
+<?php if (isset($_GET['service_control_error'])): ?>
+<div class="card">
+<p class="bad"><?= htmlspecialchars($_GET['service_control_error']) ?></p>
+</div>
+<?php endif; ?>
+
 <div class="card">
 <h2>Reflector Status</h2>
 <table>
@@ -325,13 +343,29 @@ max-width:360px;
 
 
 <div class="card">
-<h2>Maintenance Tools</h2>
+<h2>Core Reflector Controls</h2>
 <table>
+<tr><th>Service</th><th>Status</th><th>Action</th></tr>
 <tr>
-<td>Monit Dashboard</td>
-<td><a href="/monit/" style="color:#66ccff;font-weight:bold;">Open Monit Service Manager</a></td>
+<td>URFD/TCD</td>
+<td class="<?= state_class($combinedState) ?>"><?= htmlspecialchars($combinedState) ?></td>
+<td>
+<form method="post" action="service-control.php" style="margin:0;">
+<input type="hidden" name="service" value="urfd-tcd">
+<input type="hidden" name="action" value="restart">
+<input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['service_control_csrf']) ?>">
+<button type="submit">Restart</button>
+</form>
+</td>
 </tr>
 </table>
+</div>
+
+<div class="card">
+<h2>Custom Service Controls</h2>
+<p>No custom services configured yet.</p>
+<p>Future custom controls will be loaded from:</p>
+<pre>/etc/urfd-dashboard/service-controls.conf</pre>
 </div>
 
 <div class="card">
