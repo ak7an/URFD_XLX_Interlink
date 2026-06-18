@@ -2559,3 +2559,41 @@ Native Sysop Service Controls are feature-complete for current release.
 
 Monit is no longer part of the required production architecture.
 
+
+Sysop Dashboard User Management:
+
+Added helper utility:
+
+    /usr/local/bin/urfd-sysop-user
+
+Supported commands:
+
+    sudo urfd-sysop-user add USERNAME
+    sudo urfd-sysop-user remove USERNAME
+    sudo urfd-sysop-user list
+
+Purpose:
+
+Provide a simple administration interface for managing Sysop Dashboard
+authentication accounts without requiring sysops to remember Apache
+htpasswd command syntax.
+
+Security Decision:
+
+Sysop account management is intentionally not exposed through the web
+dashboard.
+
+Only administrators with server-level access may add or remove Sysop
+Dashboard users.
+
+This prevents delegated dashboard administrators from granting access
+to additional users without approval from the primary system owner.
+
+Authentication storage:
+
+    /etc/apache2/.htpasswd-urfd-sysop
+
+Status:
+
+Implemented and validated.
+

@@ -205,3 +205,29 @@ This project remains licensed under the GNU General Public License Version 3 (GP
 
 Original copyright notices from upstream projects remain in effect and have been preserved.
 
+
+### Sysop Dashboard User Management
+
+The Sysop Dashboard supports multiple authenticated administrators.
+
+User accounts are intentionally managed from the server console and are not editable through the web interface.
+
+This design prevents delegated dashboard administrators from granting additional access without approval from the primary system owner.
+
+Manage Sysop Dashboard users with:
+
+    sudo urfd-sysop-user add USERNAME
+    sudo urfd-sysop-user remove USERNAME
+    sudo urfd-sysop-user list
+
+Examples:
+
+    sudo urfd-sysop-user add Admin2
+    sudo urfd-sysop-user remove Admin2
+
+The user database is stored in:
+
+    /etc/apache2/.htpasswd-urfd-sysop
+
+Only users with server-level administrative access should manage Sysop Dashboard accounts.
+
