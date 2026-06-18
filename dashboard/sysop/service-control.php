@@ -29,9 +29,50 @@ function log_action($service, $action, $result)
     @file_put_contents($log, $line, FILE_APPEND | LOCK_EX);
 }
 
+function read_custom_service_controls()
+{
+    $conf = '/etc/urfd-dashboard/service-controls.conf';
+    $services = [];
+
+    if (!is_readable($conf)) {
+        return $services;
+    }
+
+    $currentName = '';
+
+    foreach (file($conf, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $line = trim($line);
+
+        if ($line === '' || $line[0] === '#') {
+            continue;
+        }
+
+        if (preg_match('/^\[(.+)\]$/', $line, $m)) {
+            $currentName = trim($m[1]);
+            continue;
+        }
+
+        if ($currentName !== '' && strpos($line, 'service=') === 0) {
+            $serviceUnit = trim(substr($line, 8));
+
+            if (preg_match('/^[A-Za-z0-9_.@-]+\.service$/', $serviceUnit)) {
+                $services[$serviceUnit] = $currentName;
+            }
+
+            $currentName = '';
+        }
+    }
+
+    return $services;
+}
+
 $allowed = [
     'urfd-tcd' => 'URFD/TCD',
 ];
+
+foreach (read_custom_service_controls() as $unit => $name) {
+    $allowed[$unit] = $name;
+}
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect_back('Invalid request method');

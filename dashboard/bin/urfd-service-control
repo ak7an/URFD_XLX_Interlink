@@ -2,13 +2,42 @@
 set -eu
 
 SERVICE="${1:-}"
+CONF="/etc/urfd-dashboard/service-controls.conf"
+
+restart_unit() {
+    UNIT="$1"
+
+    case "$UNIT" in
+        *.service)
+            ;;
+        *)
+            echo "Invalid service unit" >&2
+            exit 1
+            ;;
+    esac
+
+    exec /bin/systemctl restart "$UNIT"
+}
 
 case "$SERVICE" in
     urfd-tcd)
-        exec /bin/systemctl restart urfd-tcd.service
-        ;;
-    *)
-        echo "Invalid service" >&2
-        exit 1
+        restart_unit "urfd-tcd.service"
         ;;
 esac
+
+if [ -r "$CONF" ]; then
+    if awk -F= '
+        /^[[:space:]]*#/ { next }
+        /^[[:space:]]*$/ { next }
+        /^[[:space:]]*service[[:space:]]*=/ {
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2)
+            if ($2 == target) found=1
+        }
+        END { exit found ? 0 : 1 }
+    ' target="$SERVICE" "$CONF"; then
+        restart_unit "$SERVICE"
+    fi
+fi
+
+echo "Invalid service" >&2
+exit 1

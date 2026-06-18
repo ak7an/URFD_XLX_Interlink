@@ -146,6 +146,46 @@ function read_dashboard_config()
     return $out;
 }
 
+function read_custom_service_controls()
+{
+    $conf = '/etc/urfd-dashboard/service-controls.conf';
+    $services = [];
+
+    if (!is_readable($conf)) {
+        return $services;
+    }
+
+    $currentName = '';
+
+    foreach (file($conf, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $line = trim($line);
+
+        if ($line === '' || $line[0] === '#') {
+            continue;
+        }
+
+        if (preg_match('/^\[(.+)\]$/', $line, $m)) {
+            $currentName = trim($m[1]);
+            continue;
+        }
+
+        if ($currentName !== '' && strpos($line, 'service=') === 0) {
+            $serviceUnit = trim(substr($line, 8));
+
+            if (preg_match('/^[A-Za-z0-9_.@-]+\.service$/', $serviceUnit)) {
+                $services[] = [
+                    'name' => $currentName,
+                    'unit' => $serviceUnit,
+                ];
+            }
+
+            $currentName = '';
+        }
+    }
+
+    return $services;
+}
+
 function file_status($path)
 {
     if ($path === '') {
@@ -199,6 +239,7 @@ $dvsiStatus = $dvsiCount > 0 ? "ready" : "not found";
 $transcoderStatus = ($combinedState === "active" && $dvsiCount > 0) ? "ready" : "not ready";
 
 $dashboardConfig = read_dashboard_config();
+$customServiceControls = read_custom_service_controls();
 $callingHomeEnabled = strtolower($dashboardConfig['CALLING_HOME_ENABLED'] ?? 'false');
 $callingHomeState = $callingHomeEnabled === 'true' ? 'enabled' : 'disabled';
 $callingHomeTimer = service_state('urfd-callinghome.timer');
@@ -363,9 +404,32 @@ max-width:360px;
 
 <div class="card">
 <h2>Custom Service Controls</h2>
-<p>No custom services configured yet.</p>
-<p>Future custom controls will be loaded from:</p>
+
+<?php if (empty($customServiceControls)): ?>
+<p>No custom services configured.</p>
+<p>Custom controls may be added by editing:</p>
 <pre>/etc/urfd-dashboard/service-controls.conf</pre>
+<?php else: ?>
+<table>
+<tr><th>Service</th><th>Unit</th><th>Status</th><th>Action</th></tr>
+<?php foreach ($customServiceControls as $svc): ?>
+<?php $customState = service_state($svc['unit']); ?>
+<tr>
+<td><?= htmlspecialchars($svc['name']) ?></td>
+<td><?= htmlspecialchars($svc['unit']) ?></td>
+<td class="<?= state_class($customState) ?>"><?= htmlspecialchars($customState) ?></td>
+<td>
+<form method="post" action="service-control.php" style="margin:0;">
+<input type="hidden" name="service" value="<?= htmlspecialchars($svc['unit']) ?>">
+<input type="hidden" name="action" value="restart">
+<input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['service_control_csrf']) ?>">
+<button type="submit">Restart</button>
+</form>
+</td>
+</tr>
+<?php endforeach; ?>
+</table>
+<?php endif; ?>
 </div>
 
 <div class="card">
