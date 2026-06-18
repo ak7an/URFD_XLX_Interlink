@@ -77,7 +77,6 @@ check_cmd "TCD" "tcd"
 check_cmd "Apache2" "apache2"
 check_cmd "make" "make"
 check_cmd "g++" "g++"
-check_cmd "Monit" "monit"
 check_cmd "htpasswd" "htpasswd"
 check_cmd "PHP" "php"
 check_cmd "SQLite3" "sqlite3"
@@ -210,35 +209,35 @@ fi
 
 
 echo
-echo "===== Monit Maintenance ====="
+echo "===== Sysop Service Controls ====="
 
-if systemctl list-unit-files | grep -q '^monit.service'; then
-    check_pass "Monit service installed"
+check_file "Service control helper" "/usr/local/bin/urfd-service-control"
+check_file "Service control sudo policy" "/etc/sudoers.d/urfd-dashboard-service-control"
+check_file "Service control action log" "/var/log/urfd-dashboard-actions.log"
+check_file "Sysop service control endpoint" "/var/www/html/urf/urfd/sysop/service-control.php"
+
+if [ -x /usr/local/bin/urfd-service-control ]; then
+    check_pass "Service control helper executable"
 else
-    check_fail "Monit service not installed"
+    check_fail "Service control helper not executable"
 fi
 
-if systemctl is-active --quiet monit; then
-    check_pass "Monit active"
+if command -v visudo >/dev/null 2>&1 && visudo -cf /etc/sudoers.d/urfd-dashboard-service-control >/dev/null 2>&1; then
+    check_pass "Service control sudo policy valid"
 else
-    check_fail "Monit not active"
+    check_fail "Service control sudo policy invalid"
 fi
 
-check_file "Monit web UI config" "/etc/monit/conf-enabled/urfd-monit-webui"
-check_file "Monit URFD service config" "/etc/monit/conf-enabled/urfd-services"
-check_file "Monit Apache proxy config" "/etc/apache2/conf-available/urfd-monit.conf"
-check_file "Monit Apache auth file" "/etc/apache2/.htpasswd-monit"
-
-if apache2ctl -S 2>/dev/null | grep -q 'urfd-monit'; then
-    check_pass "Monit Apache config loaded"
+if [ -w /var/log/urfd-dashboard-actions.log ] || sudo -n -u www-data test -w /var/log/urfd-dashboard-actions.log 2>/dev/null; then
+    check_pass "Service control log writable by dashboard"
 else
-    check_warn "Monit Apache config not detected in apache2ctl output"
+    check_warn "Service control log may not be writable by dashboard"
 fi
 
-if curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:2812/ | grep -qE '200|401'; then
-    check_pass "Monit localhost web UI responding"
+if [ -r /etc/urfd-dashboard/service-controls.conf ]; then
+    check_pass "Custom service controls config present"
 else
-    check_warn "Monit localhost web UI not responding"
+    check_warn "Custom service controls config not present"
 fi
 
 echo

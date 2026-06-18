@@ -40,7 +40,7 @@ echo
 
 "$ROOT/scripts/install-radioid-timer.sh"
 
-"$ROOT/scripts/install-monit.sh"
+"$ROOT/scripts/install-service-controls.sh"
 
 "$ROOT/scripts/install-callinghome-timer.sh"
 
