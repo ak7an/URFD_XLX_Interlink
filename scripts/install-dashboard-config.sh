@@ -28,6 +28,50 @@ echo
 read -r -p "Dashboard logo URL or local path [none]: " DASHBOARD_LOGO
 
 echo
+echo "===== Sysop Dashboard Authentication ====="
+echo "The public dashboard remains open."
+echo "The /sysop/ dashboard should be password protected."
+echo
+
+read -r -p "Sysop dashboard username [Admin1]: " SYSOP_AUTH_USER
+SYSOP_AUTH_USER="${SYSOP_AUTH_USER:-Admin1}"
+
+while true; do
+    read -r -s -p "Sysop dashboard password: " SYSOP_AUTH_PASS
+    echo
+    read -r -s -p "Confirm sysop dashboard password: " SYSOP_AUTH_PASS_CONFIRM
+    echo
+
+    if [ -z "$SYSOP_AUTH_PASS" ]; then
+        echo "[FAIL] Password cannot be blank"
+        continue
+    fi
+
+    if [ "$SYSOP_AUTH_PASS" != "$SYSOP_AUTH_PASS_CONFIRM" ]; then
+        echo "[FAIL] Passwords do not match"
+        continue
+    fi
+
+    break
+done
+
+htpasswd -bc /etc/apache2/.htpasswd-urfd-sysop "$SYSOP_AUTH_USER" "$SYSOP_AUTH_PASS"
+chmod 640 /etc/apache2/.htpasswd-urfd-sysop
+chown root:www-data /etc/apache2/.htpasswd-urfd-sysop
+
+cat > /etc/apache2/conf-available/urfd-sysop-auth.conf <<'EOF2'
+<Location "/sysop/">
+    AuthType Basic
+    AuthName "URFD Sysop Dashboard"
+    AuthUserFile /etc/apache2/.htpasswd-urfd-sysop
+    Require valid-user
+</Location>
+EOF2
+
+a2enconf urfd-sysop-auth >/dev/null
+
+
+echo
 echo "===== XLX Calling Home / Directory Publishing ====="
 echo "Default is disabled."
 echo "Enable only when ready for public XLX directory and host-file listing."

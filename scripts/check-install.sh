@@ -215,6 +215,22 @@ check_file "Service control helper" "/usr/local/bin/urfd-service-control"
 check_file "Service control sudo policy" "/etc/sudoers.d/urfd-dashboard-service-control"
 check_file "Service control action log" "/var/log/urfd-dashboard-actions.log"
 check_file "Sysop service control endpoint" "/var/www/html/urf/urfd/sysop/service-control.php"
+check_file "Sysop auth config" "/etc/apache2/conf-enabled/urfd-sysop-auth.conf"
+check_file "Sysop auth password file" "/etc/apache2/.htpasswd-urfd-sysop"
+
+if apache2ctl -S 2>/dev/null | grep -q 'urfd-sysop-auth'; then
+    check_pass "Sysop auth Apache config loaded"
+elif [ -e /etc/apache2/conf-enabled/urfd-sysop-auth.conf ]; then
+    check_pass "Sysop auth Apache config enabled"
+else
+    check_fail "Sysop auth Apache config not enabled"
+fi
+
+if curl -k -s -o /dev/null -w "%{http_code}" https://localhost/sysop/ 2>/dev/null | grep -q '^401$'; then
+    check_pass "Sysop dashboard requires authentication"
+else
+    check_warn "Sysop dashboard authentication check did not return 401 on https://localhost/sysop/"
+fi
 
 if [ -x /usr/local/bin/urfd-service-control ]; then
     check_pass "Service control helper executable"
