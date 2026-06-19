@@ -2644,3 +2644,206 @@ Validated:
 - Deployed dashboard update
 - Linked Systems reflector dashboard hyperlinks confirmed working
 
+
+---
+
+## Roadmap: Documentation and Backup / Restore Framework
+
+Installer Documentation Direction:
+
+After clean installer validation is complete, create sysop-facing documentation so the project is not a GitHub "wild goose chase" to install.
+
+Planned documentation:
+
+- Pre-Installation Checklist
+- Installation Guide
+- Sysop Operations Guide
+- Troubleshooting Guide
+- Quick Start guide
+
+Pre-Installation Checklist should tell the sysop what information is needed before starting:
+
+- Reflector number
+- Reflector callsign
+- Public IP address or FQDN
+- Public dashboard URL
+- Country code
+- Directory comment
+- Timezone
+- Sysop dashboard username/password
+- Whether XLX Calling Home should be enabled
+- Whether DVSI ThumbDV / FTDI D2XX support will be installed
+- Any desired interlink peers
+- Any custom dashboard logo/branding
+
+Goal:
+
+A competent sysop should be able to go from fresh Debian install to working URFD reflector without searching the internet for missing setup details.
+
+Backup / Restore Roadmap:
+
+Add system customization backup and restore utilities.
+
+Proposed tools:
+
+    /usr/local/bin/urfd-backup
+    /usr/local/bin/urfd-restore
+
+Backup goal:
+
+Preserve all sysop customization needed to recover from:
+
+- Server crash
+- Disk failure
+- OS corruption
+- Accidental reinstall
+- Hardware replacement
+
+Backup should include:
+
+- /etc/urfd-dashboard/
+- /usr/local/etc/urfd.ini
+- /usr/local/etc/urfd.interlink
+- /usr/local/etc/urfd.blacklist
+- /usr/local/etc/urfd.whitelist
+- /var/lib/urfd-dashboard/
+- /var/lib/urfd/
+- Dashboard assets and custom branding
+- Sysop authentication file
+- Service control configuration
+- Calling Home hash and state files
+- Relevant systemd unit overrides if present
+
+Backup should exclude:
+
+- Compiled binaries
+- Git repositories
+- Build directories
+- Logs
+- Temporary cache files
+
+Backup archive format:
+
+    urfd-backup-YYYY-MM-DD-HHMMSS.tar.gz
+
+Archive should include a human-readable manifest:
+
+    manifest.txt
+
+Manifest should record:
+
+- Backup date/time
+- Hostname
+- URFD version or git commit
+- OS information
+- Backup tool version
+- Files included
+
+Backup modes:
+
+Manual backup:
+
+    sudo urfd-backup
+
+Backup to selected destination:
+
+    sudo urfd-backup /path/to/backup/location
+
+USB / removable media helper:
+
+    sudo urfd-backup --usb
+
+USB helper should search common mount locations:
+
+    /media/*
+    /mnt/*
+
+and allow the sysop to select a mounted flash drive, USB SSD, or other removable storage.
+
+Automatic backup:
+
+Nightly backup is probably unnecessary because most important URFD data changes only when the sysop intentionally changes configuration.
+
+Preferred automatic schedule:
+
+- Optional monthly backup timer
+- Installer prompt to enable or skip
+- Store backups in:
+
+    /var/backups/urfd/
+
+- Keep approximately 12 monthly backups
+
+Potential systemd timer:
+
+    urfd-backup.timer
+    urfd-backup.service
+
+Dashboard integration:
+
+Future Sysop Dashboard Maintenance section could include:
+
+- Create Backup
+- Download Latest Backup
+- View Backup List
+- Restore Backup
+
+Dashboard actions should use the same restricted sudo helper model already used for service controls.
+
+Restore goal:
+
+Fresh Debian install plus repository clone should allow:
+
+    sudo ./install-all.sh
+    sudo urfd-restore urfd-backup-YYYY-MM-DD-HHMMSS.tar.gz
+
+Expected result:
+
+- Reflector configuration restored
+- Interlinks restored
+- Dashboard configuration restored
+- Sysop users restored
+- Calling Home identity restored
+- Dashboard branding restored
+- Service control customizations restored
+
+Design principle:
+
+Backups should preserve identity and customization, not replace the installer or package management.
+
+Roadmap priority:
+
+1. Finish Raspberry Pi clean installer validation
+2. Fix installer defects
+3. Build sysop installation documentation
+4. Add urfd-backup / urfd-restore framework
+5. Add optional monthly backup timer
+6. Add Sysop Dashboard backup integration
+
+
+Sysop Dashboard backup integration should include a simple clickable backup action.
+
+Planned Sysop Dashboard backup link:
+
+    Create Backup
+
+Behavior:
+
+- Visible in a Maintenance / Backup section
+- Uses restricted sudo helper model
+- Creates a timestamped URFD backup archive
+- Stores archive in /var/backups/urfd/
+- Shows success/failure status in dashboard
+- Provides a download link to the latest backup when safe to expose
+- Does not allow arbitrary file download paths
+
+Security requirement:
+
+The dashboard must not directly run tar, shell commands, or accept arbitrary backup destinations from the browser.
+
+All backup actions should go through a root-owned helper such as:
+
+    /usr/local/bin/urfd-backup
+
+or a restricted dashboard wrapper.
+
