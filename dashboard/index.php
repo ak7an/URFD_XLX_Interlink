@@ -144,6 +144,72 @@ function dashboard_logo()
     return '';
 }
 
+function xlx_reflector_dashboard_links()
+{
+    static $links = null;
+
+    if ($links !== null) {
+        return $links;
+    }
+
+    $links = [];
+    $cacheFile = '/var/lib/urfd-dashboard/xlx-reflector-list.xml';
+    $cacheMaxAge = 86400;
+    $apiUrl = 'http://xlxapi.rlx.lu/api.php?do=GetReflectorList';
+
+    if (
+        (!is_readable($cacheFile)) ||
+        ((time() - filemtime($cacheFile)) > $cacheMaxAge)
+    ) {
+        $xml = @file_get_contents($apiUrl);
+        if ($xml !== false && strpos($xml, '<reflector>') !== false) {
+            @file_put_contents($cacheFile, $xml);
+        }
+    }
+
+    if (!is_readable($cacheFile)) {
+        return $links;
+    }
+
+    $raw = file_get_contents($cacheFile);
+    if ($raw === false) {
+        return $links;
+    }
+
+    preg_match_all('/<reflector>(.*?)<\/reflector>/s', $raw, $blocks);
+
+    foreach ($blocks[1] as $block) {
+        preg_match('/<name>(.*?)<\/name>/s', $block, $name);
+        preg_match('/<dashboardurl>(.*?)<\/dashboardurl>/s', $block, $url);
+
+        $peer = strtoupper(trim($name[1] ?? ''));
+        $dash = trim($url[1] ?? '');
+
+        if ($peer !== '' && filter_var($dash, FILTER_VALIDATE_URL)) {
+            $links[$peer] = $dash;
+        }
+    }
+
+    return $links;
+}
+
+function peer_dashboard_link($callsign)
+{
+    $callsign = trim($callsign);
+    $key = strtoupper($callsign);
+    $links = xlx_reflector_dashboard_links();
+
+    if (isset($links[$key])) {
+        return '<a href="' .
+               htmlspecialchars($links[$key]) .
+               '" target="_blank" rel="noopener noreferrer">' .
+               htmlspecialchars($callsign) .
+               '</a>';
+    }
+
+    return htmlspecialchars($callsign);
+}
+
 function nice_time($zulu)
 {
     if ($zulu == '') return '';
@@ -318,7 +384,7 @@ Hosted by Bit By Bit Hams<br>
 <?php if (count($peers) > 0): ?>
 <?php foreach ($peers as $peer): ?>
 <tr>
-<td><?= htmlspecialchars($peer['callsign']) ?></td>
+<td><?= peer_dashboard_link($peer['callsign']) ?></td>
 <td><?= htmlspecialchars($peer['protocol']) ?></td>
 <td><?= htmlspecialchars($peer['module']) ?></td>
 <td class="good">LINKED</td>

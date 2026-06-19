@@ -2597,3 +2597,50 @@ Status:
 
 Implemented and validated.
 
+
+---
+
+## Dashboard Enhancement: Linked Systems Dashboard URLs
+
+Implemented automatic clickable dashboard links in the Public Dashboard Linked Systems section.
+
+Behavior:
+
+- Linked peers are still read from:
+
+    /var/log/xlxd.xml
+
+- Dashboard now fetches XLX reflector directory data from:
+
+    http://xlxapi.rlx.lu/api.php?do=GetReflectorList
+
+- Directory data is cached locally at:
+
+    /var/lib/urfd-dashboard/xlx-reflector-list.xml
+
+- Cache refresh interval:
+
+    24 hours
+
+- Linked peer callsigns are matched against XLX directory reflector names.
+
+- If a dashboardurl is found, the peer callsign is rendered as a clickable hyperlink.
+
+- If no URL is available, the API is unreachable, or the reflector is not listed, the dashboard falls back to plain text.
+
+Design decision:
+
+This feature does not modify:
+
+- urfd.interlink
+- URFD protocol behavior
+- reflector configuration format
+
+The feature is dashboard-only and self-updating.
+
+Validated:
+
+- PHP syntax check passed
+- Deployed dashboard update
+- Linked Systems reflector dashboard hyperlinks confirmed working
+
