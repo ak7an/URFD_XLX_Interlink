@@ -2897,3 +2897,47 @@ Status:
 
 Pi installer validation is functionally successful.
 
+
+-------------------------------------------------------------------------------
+Installer Optional FTDI/TCD Handling
+Date: 2026-06-20
+-------------------------------------------------------------------------------
+
+Resolved:
+
+DEFECT-012
+
+install-all.sh no longer treats FTDI D2XX, TCD, and the combined URFD/TCD
+service as mandatory for the entire installer flow.
+
+Behavior now:
+
+- Attempt FTDI D2XX installation.
+- If FTDI D2XX installs successfully:
+  - Install TCD.
+  - Install the combined URFD/TCD service.
+- If FTDI D2XX is unavailable:
+  - Warn the sysop.
+  - Skip TCD.
+  - Skip the combined URFD/TCD service.
+  - Continue installing:
+    - Dashboard configuration
+    - Public dashboard
+    - Sysop dashboard
+    - RadioID database/tools/timer
+    - Sysop service controls
+    - XLX Calling Home timer
+    - Guided Configurator
+    - check-install.sh
+
+Reason:
+
+URFD can operate as a reflector without hardware DVSI/TCD support.
+
+TCD remains dependent on FTDI D2XX, but the whole installer should not fail
+when optional DVSI hardware support is unavailable.
+
+Status:
+
+Implemented.
+

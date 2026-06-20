@@ -24,11 +24,15 @@ echo
 
 "$ROOT/scripts/install-imbe-vocoder.sh"
 
-"$ROOT/scripts/install-ftdi-d2xx.sh"
-
-"$ROOT/scripts/install-tcd.sh"
-
-"$ROOT/scripts/install-urfd-tcd-service.sh"
+if "$ROOT/scripts/install-ftdi-d2xx.sh"; then
+    "$ROOT/scripts/install-tcd.sh"
+    "$ROOT/scripts/install-urfd-tcd-service.sh"
+else
+    echo
+    echo "[WARN] FTDI D2XX was not installed"
+    echo "[WARN] Skipping TCD and URFD/TCD service installation"
+    echo "[WARN] URFD, dashboard, RadioID, service controls, and Calling Home will continue"
+fi
 
 "$ROOT/scripts/install-dashboard-config.sh"
 
