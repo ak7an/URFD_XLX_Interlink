@@ -31,6 +31,12 @@ $dashboardTimezone = dashboard_timezone();
 $time = date('Y-m-d H:i:s T');
 $dashboardLogo = dashboard_logo();
 $xmlFile = '/var/log/xlxd.xml';
+$xmlFreshSeconds = 90;
+$xmlExists = is_readable($xmlFile);
+$xmlAge = $xmlExists ? (time() - filemtime($xmlFile)) : null;
+$reflectorOnline = $xmlExists && $xmlAge <= $xmlFreshSeconds;
+$reflectorStatusText = $reflectorOnline ? 'ONLINE' : ($xmlExists ? 'STALE / OFFLINE' : 'OFFLINE');
+$reflectorStatusClass = $reflectorOnline ? 'good' : 'bad';
 
 $stations = [];
 $peers = [];
@@ -360,19 +366,23 @@ Hosted by Bit By Bit Hams<br>
 
 <div class="card">
 <h2>Reflector Status</h2>
-<p><span class="good">ONLINE</span></p>
+<p><span class="<?= $reflectorStatusClass ?>"><?= htmlspecialchars($reflectorStatusText) ?></span></p>
 <p class="small">Last dashboard update: <?= htmlspecialchars($time) ?></p>
 </div>
 
 <div class="card">
 <h2>Protocols</h2>
 <div class="grid">
-<div class="badge">D-Star<br><span class="good">ONLINE</span></div>
-<div class="badge">DMR<br><span class="good">ONLINE</span></div>
-<div class="badge">YSF<br><span class="good">ONLINE</span></div>
-<div class="badge">NXDN<br><span class="good">ONLINE</span></div>
-<div class="badge">P25<br><span class="good">ONLINE</span></div>
-<div class="badge">M17<br><span class="good">ONLINE</span></div>
+<?php
+$protocolStatusText = $reflectorOnline ? 'ONLINE' : 'OFFLINE';
+$protocolStatusClass = $reflectorOnline ? 'good' : 'bad';
+?>
+<div class="badge">D-Star<br><span class="<?= $protocolStatusClass ?>"><?= $protocolStatusText ?></span></div>
+<div class="badge">DMR<br><span class="<?= $protocolStatusClass ?>"><?= $protocolStatusText ?></span></div>
+<div class="badge">YSF<br><span class="<?= $protocolStatusClass ?>"><?= $protocolStatusText ?></span></div>
+<div class="badge">NXDN<br><span class="<?= $protocolStatusClass ?>"><?= $protocolStatusText ?></span></div>
+<div class="badge">P25<br><span class="<?= $protocolStatusClass ?>"><?= $protocolStatusText ?></span></div>
+<div class="badge">M17<br><span class="<?= $protocolStatusClass ?>"><?= $protocolStatusText ?></span></div>
 </div>
 </div>
 
@@ -387,7 +397,11 @@ Hosted by Bit By Bit Hams<br>
 <td><?= peer_dashboard_link($peer['callsign']) ?></td>
 <td><?= htmlspecialchars($peer['protocol']) ?></td>
 <td><?= htmlspecialchars($peer['module']) ?></td>
+<?php if ($reflectorOnline): ?>
 <td class="good">LINKED</td>
+<?php else: ?>
+<td class="bad">STALE</td>
+<?php endif; ?>
 </tr>
 <?php endforeach; ?>
 <?php else: ?>
@@ -437,6 +451,7 @@ Hosted by Bit By Bit Hams<br>
 <th>Module</th>
 <th>IP</th>
 <th>Last Heard</th>
+<th>Status</th>
 </tr>
 
 <?php if (count($nodes) > 0): ?>
@@ -447,6 +462,13 @@ Hosted by Bit By Bit Hams<br>
 <td><?= htmlspecialchars($node['module']) ?></td>
 <td><?= htmlspecialchars(masked_ip_tail($node['ip'])) ?></td>
 <td><?= htmlspecialchars(nice_time($node['lastheard'])) ?></td>
+<td>
+<?php if ($reflectorOnline): ?>
+<span class="good">LINKED</span>
+<?php else: ?>
+<span class="bad">STALE</span>
+<?php endif; ?>
+</td>
 </tr>
 <?php endforeach; ?>
 <?php else: ?>

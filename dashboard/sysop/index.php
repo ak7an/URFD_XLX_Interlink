@@ -261,7 +261,7 @@ $dashboardLogo = dashboard_logo();
 
 $combinedState = service_state($combinedSvc);
 $urfdState = process_state('/home/ed/urfd/reflector/urfd');
-$tcdState = process_state('/usr/local/bin/tcd');
+$tcdState = $combinedState;
 
 $reflectorSince = service_running_since($combinedSvc);
 $reflectorUptime = service_uptime($combinedSvc);
@@ -284,6 +284,16 @@ $callingHomeResponseStatus = file_exists($callingHomeResponseFile) ? trim((strin
 $callingHomeHashStatus = file_status($callingHomeHashFile);
 $callingHomeLastPublish = file_timestamp($callingHomeLastFile);
 $callingHomeInterlinkStatus = file_exists($callingHomeInterlinkFile) ? 'present' : 'missing';
+
+if ($combinedState !== "active") {
+    $urfdState = $combinedState;
+    $tcdState = $combinedState;
+    $transcoderStatus = "not ready";
+    $dvsiCount = 0;
+    $dvsiStatus = "offline";
+    $reflectorUptime = "offline";
+    $reflectorSince = "offline";
+}
 
 $protocols = [
     ["DPlus", 20001],
