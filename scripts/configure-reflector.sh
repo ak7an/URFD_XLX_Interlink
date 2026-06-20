@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SRC="reflector/urfd.ini"
-OUT="reflector/urfd.ini.generated"
+SRC="config/urfd.ini"
+OUT="config/urfd.ini.generated"
 
 ask() {
     local prompt="$1"
@@ -87,4 +87,4 @@ echo "Review it with:"
 echo "  diff -u $SRC $OUT"
 echo
 echo "To install later:"
-echo "  sudo cp $OUT $SRC"
+echo "  sudo cp $OUT /usr/local/etc/urfd.ini"

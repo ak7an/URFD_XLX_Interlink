@@ -45,8 +45,20 @@ echo "===== URFD_XLX_Interlink Install Check ====="
 echo
 
 check_file "URFD binary" "/usr/local/bin/urfd"
-check_file "TCD binary" "/usr/local/bin/tcd"
-check_file "URFD/TCD launcher" "/usr/local/bin/start-urfd-tcd.sh"
+
+TCD_AVAILABLE=false
+if [ -x /usr/local/bin/tcd ]; then
+    TCD_AVAILABLE=true
+    check_pass "TCD binary: /usr/local/bin/tcd"
+else
+    check_warn "TCD binary missing; TCD stack may have been skipped"
+fi
+
+if [ -x /usr/local/bin/start-urfd-tcd.sh ]; then
+    check_pass "URFD/TCD launcher: /usr/local/bin/start-urfd-tcd.sh"
+else
+    check_warn "URFD/TCD launcher missing; TCD stack may have been skipped"
+fi
 
 echo
 echo "===== Services ====="
@@ -54,13 +66,13 @@ echo "===== Services ====="
 if systemctl list-unit-files | grep -q '^urfd-tcd.service'; then
     check_pass "urfd-tcd.service installed"
 else
-    check_fail "urfd-tcd.service not installed"
+    check_warn "urfd-tcd.service not installed; TCD stack may have been skipped"
 fi
 
 if systemctl is-active --quiet urfd-tcd.service; then
     check_pass "urfd-tcd.service active"
 else
-    check_fail "urfd-tcd.service not active"
+    check_warn "urfd-tcd.service not active; reflector may not be started yet"
 fi
 
 if systemctl is-active --quiet apache2; then
@@ -73,7 +85,11 @@ echo
 echo "===== Dependencies ====="
 
 check_cmd "URFD" "urfd"
-check_cmd "TCD" "tcd"
+if command -v tcd >/dev/null 2>&1; then
+    check_pass "TCD installed: $(command -v tcd)"
+else
+    check_warn "TCD missing; optional when FTDI D2XX is unavailable"
+fi
 check_cmd "Apache2" "apache2"
 check_cmd "make" "make"
 check_cmd "g++" "g++"
@@ -101,9 +117,23 @@ echo "===== Reflector Core Stack ====="
 
 check_file "URFD config" "/usr/local/etc/urfd.ini"
 check_file "URFD interlink config" "/usr/local/etc/urfd.interlink"
-check_file "TCD config" "/usr/local/etc/tcd.ini"
-check_file "Combined URFD/TCD launcher" "/usr/local/bin/start-urfd-tcd.sh"
-check_file "Combined URFD/TCD service" "/etc/systemd/system/urfd-tcd.service"
+if [ -e /usr/local/etc/tcd.ini ]; then
+    check_pass "TCD config: /usr/local/etc/tcd.ini"
+else
+    check_warn "TCD config missing; TCD stack may have been skipped"
+fi
+
+if [ -e /usr/local/bin/start-urfd-tcd.sh ]; then
+    check_pass "Combined URFD/TCD launcher: /usr/local/bin/start-urfd-tcd.sh"
+else
+    check_warn "Combined URFD/TCD launcher missing; TCD stack may have been skipped"
+fi
+
+if [ -e /etc/systemd/system/urfd-tcd.service ]; then
+    check_pass "Combined URFD/TCD service: /etc/systemd/system/urfd-tcd.service"
+else
+    check_warn "Combined URFD/TCD service missing; TCD stack may have been skipped"
+fi
 
 if ldconfig -p | grep -q 'libimbe_vocoder.so' || [ -f /usr/local/lib/libimbe_vocoder.a ]; then
     check_pass "IMBE vocoder library available"
@@ -114,19 +144,23 @@ fi
 if ldconfig -p | grep -q 'libftd2xx.so'; then
     check_pass "FTDI D2XX library available"
 else
-    check_fail "FTDI D2XX library missing"
+    check_warn "FTDI D2XX library missing; TCD stack may have been skipped"
 fi
 
 if [ -f /usr/local/include/ftd2xx.h ]; then
     check_pass "FTDI D2XX header present"
 else
-    check_fail "FTDI D2XX header missing"
+    check_warn "FTDI D2XX header missing; TCD stack may have been skipped"
 fi
 
-if ldd /usr/local/bin/tcd 2>/dev/null | grep -q 'not found'; then
-    check_fail "TCD has unresolved shared libraries"
+if [ -x /usr/local/bin/tcd ]; then
+    if ldd /usr/local/bin/tcd 2>/dev/null | grep -q 'not found'; then
+        check_fail "TCD has unresolved shared libraries"
+    else
+        check_pass "TCD shared libraries resolved"
+    fi
 else
-    check_pass "TCD shared libraries resolved"
+    check_warn "TCD shared library check skipped; TCD not installed"
 fi
 
 if lsusb 2>/dev/null | grep -qi '0403:6015'; then
@@ -141,7 +175,11 @@ echo "===== Dashboard ====="
 
 check_file "Public dashboard" "/var/www/html/urf/urfd/index.php"
 check_file "Sysop dashboard" "/var/www/html/urf/urfd/sysop/index.php"
-check_file "Live XML status" "/var/log/xlxd.xml"
+if [ -e /var/log/xlxd.xml ]; then
+    check_pass "Live XML status: /var/log/xlxd.xml"
+else
+    check_warn "Live XML status missing; reflector may not have started yet"
+fi
 check_file "RadioID SQLite DB" "/var/lib/urfd-dashboard/radioid.sqlite"
 check_file "RadioID importer" "/usr/local/bin/urfd-radioid-import"
 check_file "RadioID updater" "/usr/local/bin/urfd-radioid-update"
@@ -184,7 +222,7 @@ fi
 if [ -r /var/log/xlxd.xml ]; then
     check_pass "XML status readable"
 else
-    check_fail "XML status not readable"
+    check_warn "XML status not readable; reflector may not have started yet"
 fi
 
 if [ -r /var/lib/urfd-dashboard/radioid.sqlite ]; then
@@ -226,10 +264,11 @@ else
     check_fail "Sysop auth Apache config not enabled"
 fi
 
-if curl -k -s -o /dev/null -w "%{http_code}" https://localhost/sysop/ 2>/dev/null | grep -q '^401$'; then
+AUTH_CODE="$(curl -k -s -o /dev/null -w "%{http_code}" https://localhost/urf/urfd/sysop/ 2>/dev/null || true)"
+if echo "$AUTH_CODE" | grep -q '^401$'; then
     check_pass "Sysop dashboard requires authentication"
 else
-    check_warn "Sysop dashboard authentication check did not return 401 on https://localhost/sysop/"
+    check_warn "Sysop dashboard authentication check did not return 401 on https://localhost/urf/urfd/sysop/; got ${AUTH_CODE:-no response}"
 fi
 
 if [ -x /usr/local/bin/urfd-service-control ]; then

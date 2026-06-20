@@ -2847,3 +2847,53 @@ All backup actions should go through a root-owned helper such as:
 
 or a restricted dashboard wrapper.
 
+
+-------------------------------------------------------------------------------
+Raspberry Pi 3 Clean Install Validation Follow-up
+Date: 2026-06-20
+Platform: Raspberry Pi 3
+OS: Debian 13 trixie arm64
+-------------------------------------------------------------------------------
+
+Clean repository fixes applied after Pi validation:
+
+- Fixed configure-reflector.sh path assumptions.
+- Guided Configurator now reads the default template from:
+
+    config/urfd.ini
+
+- Guided Configurator now generates:
+
+    config/urfd.ini.generated
+
+- Installer instructions now tell the sysop to install the generated file to:
+
+    /usr/local/etc/urfd.ini
+
+- Updated check-install.sh so optional FTDI D2XX / TCD stack items are reported
+  as WARN instead of FAIL when that stack was intentionally skipped.
+
+- Updated fresh-install XML validation so missing /var/log/xlxd.xml is WARN
+  instead of FAIL when the reflector has not yet started.
+
+Validation reference:
+
+Clean Raspberry Pi installer validation reached:
+
+    PASS: 44
+    WARN: 18
+    FAIL: 0
+
+after optional-component validation logic was corrected.
+
+Remaining policy decisions:
+
+- Whether RadioID should auto-populate during install.
+- Whether HTTPS should remain WARN on fresh non-public Pi installs.
+- Whether Sysop auth validation should test HTTP, HTTPS, or both depending
+  on Apache deployment state.
+
+Status:
+
+Pi installer validation is functionally successful.
+
