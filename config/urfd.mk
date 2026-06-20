@@ -6,4 +6,4 @@ BINDIR = /usr/local/bin
 debug = false
 
 # To disable DHT support, set DHT to false.
-DHT = true
+DHT = false
