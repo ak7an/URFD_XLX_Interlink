@@ -2941,3 +2941,55 @@ Status:
 
 Implemented.
 
+
+-------------------------------------------------------------------------------
+FTDI D2XX Installation Policy
+Date: 2026-06-20
+-------------------------------------------------------------------------------
+
+Resolved by policy:
+
+DEFECT-011
+
+The FTDI D2XX driver is a proprietary third-party dependency.
+
+Project decision:
+
+URFD_XLX_Interlink will not automatically download or redistribute the FTDI
+D2XX driver archive.
+
+Supported behavior:
+
+- Sysops who need hardware DVSI / ThumbDV / TCD support must manually download
+  the correct Linux FTDI D2XX driver archive from FTDI.
+
+- The archive may be placed beside the repository or in /tmp before running
+  the installer.
+
+- If the archive is not present:
+  - install-ftdi-d2xx.sh reports that the archive was not found.
+  - install-all.sh continues.
+  - TCD and the combined URFD/TCD service are skipped.
+  - check-install.sh reports FTDI/TCD items as WARN, not FAIL.
+
+Reason:
+
+URFD can operate as a reflector without hardware transcoding.
+
+The installer should support non-transcoding deployments while still guiding
+sysops who choose to add DVSI/TCD support.
+
+Documentation requirement:
+
+The installation manual must include a FTDI / ThumbDV / TCD section explaining:
+
+- When FTDI D2XX is needed.
+- Where to obtain the FTDI D2XX archive.
+- Where to place the archive before installation.
+- That TCD will be skipped if FTDI D2XX is unavailable.
+- That WARN results for FTDI/TCD are acceptable on non-transcoding installs.
+
+Status:
+
+Policy accepted.
+
