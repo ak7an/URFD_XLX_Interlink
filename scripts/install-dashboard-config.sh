@@ -140,13 +140,13 @@ case "$CHOICE" in
                         ;;
                     *)
                         umask 077
-                        tr -dc 'A-Za-z0-9' </dev/urandom | head -c 16 > "$CALLING_HOME_HASH_FILE"
+                        dd if=/dev/urandom bs=16 count=1 status=none | base64 | tr -dc 'A-Za-z0-9' | cut -c1-16 > "$CALLING_HOME_HASH_FILE"
                         echo >> "$CALLING_HOME_HASH_FILE"
                         ;;
                 esac
             else
                 umask 077
-                tr -dc 'A-Za-z0-9' </dev/urandom | head -c 16 > "$CALLING_HOME_HASH_FILE"
+                dd if=/dev/urandom bs=16 count=1 status=none | base64 | tr -dc 'A-Za-z0-9' | cut -c1-16 > "$CALLING_HOME_HASH_FILE"
                 echo >> "$CALLING_HOME_HASH_FILE"
             fi
         fi

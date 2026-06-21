@@ -28,7 +28,7 @@ make -C "$IMBE_DIR" install
 
 ldconfig
 
-if ldconfig -p | grep -q 'libimbe_vocoder.so'; then
+if ldconfig -p | grep -q 'libimbe_vocoder.so' || [ -f /usr/local/lib/libimbe_vocoder.a ]; then
     echo "[PASS] libimbe_vocoder installed"
 else
     echo "[FAIL] libimbe_vocoder not found after install"

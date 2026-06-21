@@ -24,14 +24,14 @@ install -m 755 "$REFLECTOR_DIR/urfd" /usr/local/bin/urfd
 install -d -m 755 /usr/local/etc
 
 if [ ! -f /usr/local/etc/urfd.ini ]; then
-    install -m 644 "$REFLECTOR_DIR/urfd.ini" /usr/local/etc/urfd.ini
+    install -m 644 "$ROOT/config/urfd.ini" /usr/local/etc/urfd.ini
     echo "[PASS] Installed default /usr/local/etc/urfd.ini"
 else
     echo "[WARN] Existing /usr/local/etc/urfd.ini preserved"
 fi
 
 if [ ! -f /usr/local/etc/urfd.interlink ]; then
-    install -m 644 "$REFLECTOR_DIR/urfd.interlink" /usr/local/etc/urfd.interlink
+    install -m 644 "$ROOT/config/urfd.interlink" /usr/local/etc/urfd.interlink
     echo "[PASS] Installed default /usr/local/etc/urfd.interlink"
 else
     echo "[WARN] Existing /usr/local/etc/urfd.interlink preserved"

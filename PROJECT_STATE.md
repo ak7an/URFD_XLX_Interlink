@@ -2993,3 +2993,66 @@ Status:
 
 Policy accepted.
 
+
+-------------------------------------------------------------------------------
+Installer Validation Update - 2026-06-20
+-------------------------------------------------------------------------------
+
+Fresh Raspberry Pi clean install validation discovered and fixed additional
+installer defects.
+
+Validation platform:
+
+    Raspberry Pi 3
+    Debian 13 trixie arm64
+    Fresh clone into ~/urfd
+
+New defects fixed:
+
+DEFECT-015
+    scripts/install-urfd.sh attempted to install:
+
+        reflector/urfd.ini
+
+    Corrected to:
+
+        config/urfd.ini
+
+DEFECT-016
+    scripts/install-urfd.sh attempted to install:
+
+        reflector/urfd.interlink
+
+    Corrected to:
+
+        config/urfd.interlink
+
+DEFECT-017
+    scripts/install-imbe-vocoder.sh only validated:
+
+        libimbe_vocoder.so
+
+    Corrected to also accept:
+
+        /usr/local/lib/libimbe_vocoder.a
+
+DEFECT-018
+    scripts/install-dashboard-config.sh used unsafe:
+
+        tr | head -c
+
+    under set -euo pipefail.
+
+    Replaced with safe hash generation.
+
+Clean install result after fixes:
+
+    PASS: 41
+    WARN: 18
+    FAIL: 0
+
+Conclusion:
+
+    Installer completed end-to-end on a clean Raspberry Pi after these fixes.
+    These fixes must be committed before final v1.0.1 validation.
+
