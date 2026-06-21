@@ -3056,3 +3056,91 @@ Conclusion:
     Installer completed end-to-end on a clean Raspberry Pi after these fixes.
     These fixes must be committed before final v1.0.1 validation.
 
+
+-------------------------------------------------------------------------------
+Dashboard Service Control Improvements - 2026-06-21
+-------------------------------------------------------------------------------
+
+Operational review after network-loop troubleshooting identified a problem
+with Monit automatically restarting URFD/TCD when intentionally stopped by
+the sysop.
+
+Production server changes:
+
+    monit.service disabled
+
+Reason:
+
+    Manual operational control is preferred over automatic restart during
+    maintenance and troubleshooting.
+
+Sysop Dashboard Improvements:
+
+Added service control actions:
+
+    Start
+    Stop
+    Restart
+
+Previous behavior:
+
+    Restart only
+
+Updated components:
+
+    dashboard/bin/urfd-service-control
+    dashboard/sysop/service-control.php
+    dashboard/sysop/index.php
+
+Service helper now supports:
+
+    start
+    stop
+    restart
+
+for:
+
+    urfd-tcd
+
+and configured custom services.
+
+Security model unchanged:
+
+    CSRF protection retained
+    sudoers restrictions retained
+    service allow-list retained
+
+URFD/TCD Service Improvements:
+
+Updated installer-generated systemd service:
+
+    scripts/install-urfd-tcd-service.sh
+
+Added:
+
+    SuccessExitStatus=143
+    RestartPreventExitStatus=143
+
+Result:
+
+    Intentional service stop now reports:
+
+        inactive (dead)
+
+    instead of:
+
+        failed
+
+Validation:
+
+    Dashboard Stop button validated
+    Dashboard Start button validated
+    Dashboard Restart button validated
+
+Confirmed:
+
+    URFD starts correctly
+    TCD starts correctly
+    Public dashboard reports OFFLINE when stopped
+    Public dashboard returns ONLINE after restart
+

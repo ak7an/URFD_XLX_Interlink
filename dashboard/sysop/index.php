@@ -433,12 +433,16 @@ max-width:360px;
 <td>URFD/TCD</td>
 <td class="<?= state_class($combinedState) ?>"><?= htmlspecialchars($combinedState) ?></td>
 <td>
+<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+<?php foreach (['start' => 'Start', 'stop' => 'Stop', 'restart' => 'Restart'] as $actionValue => $actionLabel): ?>
 <form method="post" action="service-control.php" style="margin:0;">
 <input type="hidden" name="service" value="urfd-tcd">
-<input type="hidden" name="action" value="restart">
+<input type="hidden" name="action" value="<?= htmlspecialchars($actionValue) ?>">
 <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['service_control_csrf']) ?>">
-<button type="submit">Restart</button>
+<button type="submit"><?= htmlspecialchars($actionLabel) ?></button>
 </form>
+<?php endforeach; ?>
+</div>
 </td>
 </tr>
 </table>
@@ -461,12 +465,16 @@ max-width:360px;
 <td><?= htmlspecialchars($svc['unit']) ?></td>
 <td class="<?= state_class($customState) ?>"><?= htmlspecialchars($customState) ?></td>
 <td>
+<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+<?php foreach (['start' => 'Start', 'stop' => 'Stop', 'restart' => 'Restart'] as $actionValue => $actionLabel): ?>
 <form method="post" action="service-control.php" style="margin:0;">
 <input type="hidden" name="service" value="<?= htmlspecialchars($svc['unit']) ?>">
-<input type="hidden" name="action" value="restart">
+<input type="hidden" name="action" value="<?= htmlspecialchars($actionValue) ?>">
 <input type="hidden" name="csrf" value="<?= htmlspecialchars($_SESSION['service_control_csrf']) ?>">
-<button type="submit">Restart</button>
+<button type="submit"><?= htmlspecialchars($actionLabel) ?></button>
 </form>
+<?php endforeach; ?>
+</div>
 </td>
 </tr>
 <?php endforeach; ?>

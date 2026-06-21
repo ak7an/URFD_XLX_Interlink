@@ -93,7 +93,9 @@ Wants=network-online.target
 [Service]
 Type=simple
 ExecStart=/usr/local/bin/start-urfd-tcd.sh
+SuccessExitStatus=143
 Restart=always
+RestartPreventExitStatus=143
 RestartSec=5
 
 [Install]

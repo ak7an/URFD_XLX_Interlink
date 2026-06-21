@@ -90,7 +90,7 @@ if (
     redirect_back('Security check failed');
 }
 
-if ($action !== 'restart') {
+if (!in_array($action, ['start', 'stop', 'restart'], true)) {
     log_action($service, $action, 'rejected-invalid-action');
     redirect_back('Invalid action');
 }
@@ -107,13 +107,13 @@ if ($sudo === '') {
     redirect_back('sudo not found on this system.', false);
 }
 
-$cmd = escapeshellcmd($sudo) . ' /usr/local/bin/urfd-service-control ' . escapeshellarg($service) . ' 2>&1';
+$cmd = escapeshellcmd($sudo) . ' /usr/local/bin/urfd-service-control ' . escapeshellarg($action) . ' ' . escapeshellarg($service) . ' 2>&1';
 exec($cmd, $output, $rc);
 
 if ($rc === 0) {
     log_action($service, $action, 'success');
-    redirect_back($allowed[$service] . ' restarted successfully.', true);
+    redirect_back($allowed[$service] . ' ' . $action . ' completed successfully.', true);
 }
 
 log_action($service, $action, 'failed-rc-' . $rc);
-redirect_back($allowed[$service] . ' restart failed.', false);
+redirect_back($allowed[$service] . ' ' . $action . ' failed.', false);

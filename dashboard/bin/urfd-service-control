@@ -1,11 +1,13 @@
 #!/bin/sh
 set -eu
 
-SERVICE="${1:-}"
+ACTION="${1:-}"
+SERVICE="${2:-}"
 CONF="/etc/urfd-dashboard/service-controls.conf"
 
-restart_unit() {
-    UNIT="$1"
+control_unit() {
+    ACTION="$1"
+    UNIT="$2"
 
     case "$UNIT" in
         *.service)
@@ -16,12 +18,21 @@ restart_unit() {
             ;;
     esac
 
-    exec /bin/systemctl restart "$UNIT"
+    case "$ACTION" in
+        start|stop|restart)
+            ;;
+        *)
+            echo "Invalid action" >&2
+            exit 1
+            ;;
+    esac
+
+    exec /bin/systemctl "$ACTION" "$UNIT"
 }
 
 case "$SERVICE" in
     urfd-tcd)
-        restart_unit "urfd-tcd.service"
+        control_unit "$ACTION" "urfd-tcd.service"
         ;;
 esac
 
@@ -35,7 +46,7 @@ if [ -r "$CONF" ]; then
         }
         END { exit found ? 0 : 1 }
     ' target="$SERVICE" "$CONF"; then
-        restart_unit "$SERVICE"
+        control_unit "$ACTION" "$SERVICE"
     fi
 fi
 
