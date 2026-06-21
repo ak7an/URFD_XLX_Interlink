@@ -3144,3 +3144,98 @@ Confirmed:
     Public dashboard reports OFFLINE when stopped
     Public dashboard returns ONLINE after restart
 
+
+---
+
+## Pi 3 Full-Stack Validation - FTDI/TCD/DVSI
+
+Date: 2026-06-21
+
+Platform:
+
+- Raspberry Pi 3
+- Debian 13 trixie arm64
+- Kernel 6.18.34+rpt-rpi-v8
+
+Validated:
+
+- Fresh clone to ~/urfd
+- URFD build/install
+- IMBE vocoder build/install
+- FTDI D2XX install using libftd2xx-linux-arm-v8-1.4.35.tgz
+- TCD build/install
+- urfd-tcd.service install
+- Dual ThumbDV detection
+- Hybrid Transcoder startup
+- URFD/TCD combined service startup
+
+ThumbDV devices detected:
+
+- D30G37AJ
+- D30G37BA
+
+Runtime validation:
+
+- D30G37AJ configured for D-Star
+- D30G37BA configured for DMR/YSF
+- TCD connected to URFD on 127.0.0.1:10100
+- Hybrid Transcoder successfully started
+- Reflector URF277 started and listening
+
+Final successful status:
+
+- urfd-tcd.service active running
+- URFD running
+- TCD running
+- DVSI/FTDI USB devices detected
+
+Installer defects found and patched:
+
+DEFECT-019:
+
+FTDI D2XX direct download cannot be assumed.
+FTDI site may block command-line download attempts and return HTML/403 content.
+
+Mitigation:
+
+- Installer now validates archive with tar -tzf before extraction.
+- Bad HTML downloads are rejected with a clear failure message.
+
+DEFECT-020:
+
+FTDI installer example referenced obsolete 1.4.27 archive naming.
+
+Mitigation:
+
+- Installer message now uses generic version placeholder:
+  libftd2xx-linux-<arch>-<version>.tgz
+
+DEFECT-021:
+
+FTDI D2XX 1.4.35 ARMv8 archive layout required improved library/header selection.
+
+Mitigation:
+
+- Versioned libftd2xx.so.* is preferred.
+- Plain libftd2xx.so is accepted as fallback.
+- Top-level ftd2xx.h and WinTypes.h are selected instead of example copies.
+
+DEFECT-022:
+
+Fresh install left URF??? placeholder and /home/user file paths in urfd.ini.
+URFD refused to start because URF??? is malformed.
+
+Mitigation:
+
+- Fresh default install now rewrites:
+  - Callsign = URF277
+  - WhitelistPath = /usr/local/etc/urfd.whitelist
+  - BlacklistPath = /usr/local/etc/urfd.blacklist
+  - InterlinkPath = /usr/local/etc/urfd.interlink
+  - G3TerminalPath = /usr/local/etc/urfd.terminal
+- Empty support files are created during install.
+
+Current result:
+
+Fresh Pi full-stack FTDI/TCD/DVSI validation passed after installer fixes.
+

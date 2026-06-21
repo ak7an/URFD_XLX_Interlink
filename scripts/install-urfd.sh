@@ -25,6 +25,16 @@ install -d -m 755 /usr/local/etc
 
 if [ ! -f /usr/local/etc/urfd.ini ]; then
     install -m 644 "$ROOT/config/urfd.ini" /usr/local/etc/urfd.ini
+
+sed -i '0,/^Callsign = .*/s//Callsign = URF277/' /usr/local/etc/urfd.ini
+sed -i 's|^WhitelistPath = .*|WhitelistPath = /usr/local/etc/urfd.whitelist|' /usr/local/etc/urfd.ini
+sed -i 's|^BlacklistPath = .*|BlacklistPath = /usr/local/etc/urfd.blacklist|' /usr/local/etc/urfd.ini
+sed -i 's|^InterlinkPath = .*|InterlinkPath = /usr/local/etc/urfd.interlink|' /usr/local/etc/urfd.ini
+sed -i 's|^G3TerminalPath = .*|G3TerminalPath = /usr/local/etc/urfd.terminal|' /usr/local/etc/urfd.ini
+
+touch /usr/local/etc/urfd.whitelist \
+      /usr/local/etc/urfd.blacklist \
+      /usr/local/etc/urfd.terminal
     echo "[PASS] Installed default /usr/local/etc/urfd.ini"
 else
     echo "[WARN] Existing /usr/local/etc/urfd.ini preserved"

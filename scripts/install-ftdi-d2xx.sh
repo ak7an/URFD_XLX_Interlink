@@ -52,7 +52,7 @@ if [ "${#CANDIDATES[@]}" -eq 0 ]; then
     echo
     echo "Place the archive beside this repository or in /tmp."
     echo "Example:"
-    echo "  $PARENT/libftd2xx-${ARCH_HINT}-1.4.27.tgz"
+    echo "  $PARENT/libftd2xx-linux-${ARCH_HINT}-<version>.tgz"
     echo
     echo "Then rerun:"
     echo "  sudo ./scripts/install-ftdi-d2xx.sh"
@@ -65,12 +65,21 @@ echo "[INFO] Using archive: $ARCHIVE"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
+if ! tar -tzf "$ARCHIVE" >/dev/null 2>&1; then
+    echo "[FAIL] FTDI archive is not a valid gzip tar archive: $ARCHIVE"
+    echo "       This may be an HTML error page saved as .tgz."
+    exit 1
+fi
+
 tar -xzf "$ARCHIVE" -C "$WORK"
 
-LIB="$(find "$WORK" -type f -name "libftd2xx.so.*" | head -1)"
+LIB="$(find "$WORK" -type f -name "libftd2xx.so.*" | sort -V | tail -1)"
+if [ -z "$LIB" ]; then
+    LIB="$(find "$WORK" -type f -name "libftd2xx.so" | head -1)"
+fi
 STATIC_LIB="$(find "$WORK" -type f -name "libftd2xx.a" | head -1 || true)"
-HEADER="$(find "$WORK" -type f -name "ftd2xx.h" | head -1)"
-WINTYPES="$(find "$WORK" -type f -name "WinTypes.h" | head -1)"
+HEADER="$(find "$WORK" -type f -path "*/ftd2xx.h" | grep -v "/examples/" | head -1)"
+WINTYPES="$(find "$WORK" -type f -path "*/WinTypes.h" | grep -v "/examples/" | head -1)"
 
 if [ -z "$LIB" ] || [ -z "$HEADER" ] || [ -z "$WINTYPES" ]; then
     echo "[FAIL] Archive does not contain expected FTDI D2XX files"
@@ -78,7 +87,9 @@ if [ -z "$LIB" ] || [ -z "$HEADER" ] || [ -z "$WINTYPES" ]; then
 fi
 
 install -m 755 "$LIB" /usr/local/lib/
-ln -sf "/usr/local/lib/$(basename "$LIB")" /usr/local/lib/libftd2xx.so
+if [ "$(basename "$LIB")" != "libftd2xx.so" ]; then
+    ln -sf "/usr/local/lib/$(basename "$LIB")" /usr/local/lib/libftd2xx.so
+fi
 
 if [ -n "$STATIC_LIB" ]; then
     install -m 644 "$STATIC_LIB" /usr/local/lib/libftd2xx.a
