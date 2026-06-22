@@ -438,6 +438,13 @@ If XLX Calling Home or public directory listing will be
 enabled, selecting a unique reflector number is strongly
 recommended.
 
+Existing public reflector assignments can be reviewed from:
+
+    https://xlx.bitbybithams.com/index.php?show=reflectors
+
+Review existing assignments before selecting a reflector
+number for a new deployment.
+
 A future installer release may prompt for this value.
 
 ---
