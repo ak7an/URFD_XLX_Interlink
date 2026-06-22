@@ -407,15 +407,36 @@ Example:
 
     URF277
 
+Replace the example callsign with the reflector
+identifier assigned to your installation.
+
 Do not use:
 
     XLX277
 
 for the URFD Callsign field.
 
-The installer default is:
+The reflector callsign must follow the format:
+
+    URF###
+
+where # is a numeric digit.
+
+Examples:
 
     URF277
+    URF123
+    URF999
+
+Before selecting a reflector number, verify that the
+number is not already in use by another public reflector.
+
+Duplicate reflector numbers can create confusion for users,
+host files, dashboards, and directory listings.
+
+If XLX Calling Home or public directory listing will be
+enabled, selecting a unique reflector number is strongly
+recommended.
 
 A future installer release may prompt for this value.
 
