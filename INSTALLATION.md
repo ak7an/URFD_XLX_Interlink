@@ -78,6 +78,13 @@ Actual serial numbers will differ for each installation.
 
 Recommended public ports:
 
+Web Services:
+
+    TCP 80     HTTP
+    TCP 443    HTTPS
+
+Digital Voice Services:
+
     UDP 20001  DPlus
     UDP 30001  DExtra
     UDP 30051  DCS
@@ -88,6 +95,15 @@ Recommended public ports:
     UDP 17000  M17
     UDP 10002  XLX Interlink
     UDP 40000  G3
+
+HTTP and HTTPS are strongly recommended.
+
+The public dashboard, Sysop dashboard, RadioID services,
+and management functions are designed to be accessed
+through HTTPS.
+
+For Internet-facing deployments, a valid TLS certificate
+(Let's Encrypt recommended) should be configured.
 
 ---
 
@@ -130,19 +146,34 @@ Update repository:
 
 TCD requires the FTDI D2XX library.
 
-Download the appropriate Linux D2XX archive from FTDI.
+Download the appropriate Linux D2XX archive from FTDI:
+
+    https://ftdichip.com/drivers/d2xx-drivers/
+
+Select the Linux D2XX driver package appropriate for
+your platform.
 
 Example ARM64 archive:
 
     libftd2xx-linux-arm-v8-1.4.35.tgz
 
-Place the archive in:
+Example x86_64 archive:
+
+    libftd2xx-linux-x86_64-<version>.tgz
+
+Place the downloaded archive in:
 
     /tmp
 
 or beside the repository.
 
-The installer automatically detects the archive.
+The installer automatically detects and installs the archive.
+
+Note:
+
+Some FTDI downloads may not work correctly with command-line
+download tools such as wget. Downloading the archive using a
+web browser is recommended.
 
 ---
 
