@@ -391,11 +391,11 @@ Follow the prompts and select the hostname assigned to the reflector.
 
 After HTTPS is configured, verify:
 
-    https://your-hostname/
+    https://your-hostname/urf/urfd/
 
 and:
 
-    https://your-hostname/sysop/
+    https://your-hostname/urf/urfd/sysop/
 
 ---
 
