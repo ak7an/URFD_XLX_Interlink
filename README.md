@@ -160,6 +160,24 @@ PROJECT_STATE.md
 
 ---
 
+## Screenshots
+
+Dashboard screenshots are stored under:
+
+```
+docs/screenshots/
+```
+
+Planned screenshots:
+
+- Public Dashboard
+- Sysop Dashboard
+- Service Controls
+- XLX Calling Home Status
+- RadioID Last Heard Lookup
+
+---
+
 ## Sysop Dashboard User Management
 
 The Sysop Dashboard supports multiple authenticated administrators.
