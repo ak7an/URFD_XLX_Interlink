@@ -97,20 +97,34 @@ Features:
 
 ## Deployment Framework
 
-Included tools:
+Master installer:
 
 * install-all.sh
+
+Current install-all.sh flow:
+
 * install-deps.sh
-* install-dashboard.sh
+* install-urfd.sh
+* install-imbe-vocoder.sh
+* install-ftdi-d2xx.sh
+* install-tcd.sh
+* install-urfd-tcd-service.sh
 * install-dashboard-config.sh
-* install-service-controls.sh
-* install-monit.sh
-* install-callinghome-timer.sh
+* install-dashboard.sh
 * setup-radioid-db.sh
 * install-radioid-tools.sh
 * install-radioid-timer.sh
+* install-service-controls.sh
+* install-callinghome-timer.sh
 * configure-reflector.sh
 * check-install.sh
+
+If FTDI D2XX installation is skipped or unavailable, the installer skips the TCD
+and URFD/TCD service steps while continuing with URFD, dashboard, RadioID,
+service controls, Calling Home, reflector configuration, and validation.
+
+Monit is historical/optional and is not part of the current master installer
+flow.
 
 ---
 
