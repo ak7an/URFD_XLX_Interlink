@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [ "$EUID" -ne 0 ]; then
+    echo "[FAIL] Please run as root"
+    exit 1
+fi
+
 install -m 755 dashboard/bin/urfd-radioid-import /usr/local/bin/urfd-radioid-import
 install -m 755 dashboard/bin/urfd-radioid-update /usr/local/bin/urfd-radioid-update
 

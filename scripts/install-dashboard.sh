@@ -5,6 +5,11 @@ WEBROOT="/var/www/html/urf/urfd"
 
 echo "===== Installing Dashboard ====="
 
+if [ "$EUID" -ne 0 ]; then
+    echo "[FAIL] Please run as root"
+    exit 1
+fi
+
 install -d -m 755 /var/www/html/urf
 install -d -m 755 "$WEBROOT"
 

@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [ "$EUID" -ne 0 ]; then
+    echo "[FAIL] Please run as root"
+    exit 1
+fi
+
 cat >/etc/systemd/system/urfd-radioid-update.service <<'SERVICE'
 [Unit]
 Description=Update URFD Dashboard RadioID SQLite Database

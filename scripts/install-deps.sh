@@ -4,6 +4,11 @@ set -euo pipefail
 echo "===== Installing Dependencies ====="
 echo "[INFO] Monit is optional/historical; install it separately with scripts/install-monit.sh if needed."
 
+if [ "$EUID" -ne 0 ]; then
+    echo "[FAIL] Please run as root"
+    exit 1
+fi
+
 apt-get update
 
 apt-get install -y \
