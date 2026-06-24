@@ -2,6 +2,7 @@
 set -euo pipefail
 
 echo "===== Installing Dependencies ====="
+echo "[INFO] Monit is optional/historical; install it separately with scripts/install-monit.sh if needed."
 
 apt-get update
 
@@ -13,7 +14,6 @@ apt-get install -y \
     pkg-config \
     apache2 \
     apache2-utils \
-    monit \
     php \
     php-cli \
     php-xml \
