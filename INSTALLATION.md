@@ -398,6 +398,41 @@ a failure.
 
 ---
 
+## Native Sysop Health Checks
+
+The Sysop Dashboard uses the native URFD health engine for reflector health
+summaries. This is the preferred dashboard health source and does not require
+Monit.
+
+Installed tool:
+
+```text
+/usr/local/bin/urfd-health
+```
+
+Dashboard source:
+
+```text
+/var/www/html/urf/urfd/bin/urfd-health
+/var/www/html/urf/urfd/sysop/health.php
+```
+
+The health engine observes system state only. Service controls remain separate
+and continue to use the service-control helpers for start, stop, and restart
+actions.
+
+Manual validation:
+
+```bash
+/usr/local/bin/urfd-health --pretty
+/usr/local/bin/urfd-health --text
+```
+
+Monit remains optional external monitoring and can be installed separately when
+desired. It is not required for Sysop Dashboard health.
+
+---
+
 ## XLX Calling Home
 
 XLX Calling Home is optional, disabled by default, and controlled by the sysop

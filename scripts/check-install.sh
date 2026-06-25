@@ -282,6 +282,7 @@ check_file_warn "Public dashboard" "/var/www/html/urf/urfd/index.php"
 check_file_warn "Sysop dashboard" "/var/www/html/urf/urfd/sysop/index.php"
 check_php_lint_if_exists "Public dashboard" "/var/www/html/urf/urfd/index.php"
 check_php_lint_if_exists "Sysop dashboard" "/var/www/html/urf/urfd/sysop/index.php"
+check_php_lint_if_exists "Sysop health helper" "/var/www/html/urf/urfd/sysop/health.php"
 check_php_lint_if_exists "Sysop service control endpoint" "/var/www/html/urf/urfd/sysop/service-control.php"
 check_php_lint_if_exists "Sysop service config endpoint" "/var/www/html/urf/urfd/sysop/service-config.php"
 check_php_lint_if_exists "Sysop service discovery endpoint" "/var/www/html/urf/urfd/sysop/service-discovery.php"
@@ -306,10 +307,31 @@ fi
 check_file "RadioID SQLite DB" "/var/lib/urfd-dashboard/radioid.sqlite"
 check_file "RadioID importer" "/usr/local/bin/urfd-radioid-import"
 check_file "RadioID updater" "/usr/local/bin/urfd-radioid-update"
+check_file "Native health engine" "/usr/local/bin/urfd-health"
 check_executable "RadioID importer" "/usr/local/bin/urfd-radioid-import"
 check_executable "RadioID updater" "/usr/local/bin/urfd-radioid-update"
+check_executable "Native health engine" "/usr/local/bin/urfd-health"
 check_file "RadioID config" "/etc/urfd-dashboard/radioid.conf"
 check_file "Dashboard config" "/etc/urfd-dashboard/dashboard.conf"
+
+if [ -x /usr/local/bin/urfd-health ]; then
+    if python3 -m py_compile /usr/local/bin/urfd-health >/dev/null 2>&1; then
+        check_pass "Native health engine Python syntax valid"
+    else
+        check_fail "Native health engine Python syntax invalid"
+    fi
+
+    if /usr/local/bin/urfd-health --pretty >/dev/null 2>&1; then
+        check_pass "Native health engine reports PASS"
+    else
+        HEALTH_RC="$?"
+        if [ "$HEALTH_RC" = "1" ] || [ "$HEALTH_RC" = "2" ]; then
+            check_warn "Native health engine reports degraded health"
+        else
+            check_fail "Native health engine failed to run"
+        fi
+    fi
+fi
 
 if [ -r /etc/urfd-dashboard/radioid.conf ]; then
     check_conf_key "RadioID DMR URL" "DMR_URL" "/etc/urfd-dashboard/radioid.conf"

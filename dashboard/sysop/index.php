@@ -2,6 +2,8 @@
 
 session_start();
 
+require_once __DIR__ . '/health.php';
+
 if (empty($_SESSION['service_control_csrf'])) {
     $_SESSION['service_control_csrf'] = bin2hex(random_bytes(32));
 }
@@ -105,6 +107,17 @@ function dvsi_dongle_count()
 function state_class($state)
 {
     return ($state === "active" || $state === "ready" || $state === "online") ? "good" : "bad";
+}
+
+function health_status_class($status)
+{
+    if ($status === "PASS") {
+        return "good";
+    }
+    if ($status === "WARN") {
+        return "warn";
+    }
+    return "bad";
 }
 
 function dashboard_logo()
@@ -271,6 +284,9 @@ $dvsiStatus = $dvsiCount > 0 ? "ready" : "not found";
 $transcoderStatus = ($combinedState === "active" && $dvsiCount > 0) ? "ready" : "not ready";
 
 $dashboardConfig = read_dashboard_config();
+$health = urfd_health();
+$healthCounts = $health['counts'] ?? urfd_health_counts($health);
+$healthProblems = urfd_health_problem_checks($health);
 $customServiceControls = read_custom_service_controls();
 $callingHomeEnabled = strtolower($dashboardConfig['CALLING_HOME_ENABLED'] ?? 'false');
 $callingHomeState = $callingHomeEnabled === 'true' ? 'enabled' : 'disabled';
@@ -334,6 +350,7 @@ box-sizing:border-box;
 main{padding:20px 30px 40px 30px;}
 .card{background:#162231;border:1px solid #2d425c;border-radius:10px;padding:20px 30px 40px 30px;margin-bottom:20px;max-width:900px;}
 .good{color:#66ff66;font-weight:bold;}
+.warn{color:#ffcc66;font-weight:bold;}
 .bad{color:#ff6666;font-weight:bold;}
 table{border-collapse:collapse;}
 td,th{padding:8px 15px;text-align:left;}
@@ -378,6 +395,36 @@ max-width:360px;
 <p class="bad"><?= htmlspecialchars($_GET['service_control_error']) ?></p>
 </div>
 <?php endif; ?>
+
+<div class="card">
+<h2>System Health</h2>
+<table>
+<tr>
+<td>Overall Status</td>
+<td class="<?= health_status_class($health['overall'] ?? 'WARN') ?>"><?= htmlspecialchars($health['overall'] ?? 'WARN') ?></td>
+</tr>
+<tr>
+<td>Check Counts</td>
+<td>
+<span class="good">PASS <?= htmlspecialchars((string)($healthCounts['PASS'] ?? 0)) ?></span>
+&nbsp;
+<span class="warn">WARN <?= htmlspecialchars((string)($healthCounts['WARN'] ?? 0)) ?></span>
+&nbsp;
+<span class="bad">FAIL <?= htmlspecialchars((string)($healthCounts['FAIL'] ?? 0)) ?></span>
+</td>
+</tr>
+<?php if (empty($healthProblems)): ?>
+<tr><td>Warnings / Failures</td><td class="good">None</td></tr>
+<?php else: ?>
+<?php foreach ($healthProblems as $item): ?>
+<tr>
+<td class="<?= health_status_class($item['status'] ?? 'WARN') ?>"><?= htmlspecialchars(($item['status'] ?? 'WARN') . ' ' . ($item['label'] ?? 'Health Check')) ?></td>
+<td><?= htmlspecialchars($item['message'] ?? '') ?></td>
+</tr>
+<?php endforeach; ?>
+<?php endif; ?>
+</table>
+</div>
 
 <div class="card">
 <h2>Reflector Status</h2>

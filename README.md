@@ -87,7 +87,7 @@ Features:
 * Protocol listener status
 * DVSI ThumbDV status
 * Transcoder status
-* Server health monitoring
+* Native system health checks
 * Start / Stop / Restart controls
 * Custom service controls
 * CSRF protection
@@ -125,6 +125,10 @@ service controls, Calling Home, reflector configuration, and validation.
 
 Monit is historical/optional and is not part of the current master installer
 flow.
+
+The Sysop Dashboard uses the native `urfd-health` engine for reflector health
+summaries. Monit can still be installed as external monitoring, but it is not
+required for dashboard health status.
 
 ---
 

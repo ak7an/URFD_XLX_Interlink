@@ -41,6 +41,11 @@ if [ -f "$WEBROOT/bin/urfd-service-config" ]; then
     chmod 755 "$WEBROOT/bin/urfd-service-config"
 fi
 
+if [ -f "$WEBROOT/bin/urfd-health" ]; then
+    chmod 755 "$WEBROOT/bin/urfd-health"
+    install -m 755 "$WEBROOT/bin/urfd-health" /usr/local/bin/urfd-health
+fi
+
 echo
 echo "[PASS] Dashboard installed"
 echo "Location: $WEBROOT"

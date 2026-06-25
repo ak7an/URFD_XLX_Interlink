@@ -1,0 +1,296 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import os
+import re
+import shutil
+import sqlite3
+import subprocess
+import sys
+import time
+
+
+DASHBOARD_CONF = "/etc/urfd-dashboard/dashboard.conf"
+XML_STATUS = "/var/log/xlxd.xml"
+RADIOID_DB = "/var/lib/urfd-dashboard/radioid.sqlite"
+XML_FRESH_WARN_SECONDS = 120
+XML_FRESH_FAIL_SECONDS = 300
+
+PROTOCOLS = [
+    ("dplus_udp_20001", "DPlus UDP 20001", 20001),
+    ("dextra_udp_30001", "DExtra UDP 30001", 30001),
+    ("dcs_udp_30051", "DCS UDP 30051", 30051),
+    ("dmr_udp_62030", "DMR UDP 62030", 62030),
+    ("xlx_interlink_udp_10002", "XLX interlink UDP 10002", 10002),
+    ("ysf_udp_42000", "YSF UDP 42000", 42000),
+    ("nxdn_udp_41400", "NXDN UDP 41400", 41400),
+    ("p25_udp_41000", "P25 UDP 41000", 41000),
+    ("m17_udp_17000", "M17 UDP 17000", 17000),
+]
+
+
+def run_command(args):
+    if shutil.which(args[0]) is None and not os.path.exists(args[0]):
+        return None, f"{args[0]} not found", 127
+
+    try:
+        completed = subprocess.run(
+            args,
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=5,
+        )
+    except subprocess.TimeoutExpired:
+        return "", "command timed out", 124
+
+    return completed.stdout.strip(), completed.stderr.strip(), completed.returncode
+
+
+def check(check_id, label, status, message, details=None):
+    return {
+        "id": check_id,
+        "label": label,
+        "status": status,
+        "message": message,
+        "details": details or {},
+    }
+
+
+def systemd_state(unit):
+    stdout, stderr, code = run_command(["systemctl", "is-active", unit])
+    state = stdout if stdout else "unavailable"
+
+    if code == 0 and state == "active":
+        status = "PASS"
+        message = f"{unit} is active"
+    elif state in ("activating", "reloading", "deactivating"):
+        status = "WARN"
+        message = f"{unit} is {state}"
+    else:
+        status = "FAIL"
+        message = f"{unit} is {state}"
+
+    return check(
+        "urfd_service",
+        "URFD/TCD Service",
+        status,
+        message,
+        {"unit": unit, "state": state, "error": stderr, "exit_code": code},
+    )
+
+
+def process_running(process_name):
+    stdout, stderr, code = run_command(["pgrep", "-x", process_name])
+    pids = [pid for pid in stdout.splitlines() if pid.strip().isdigit()] if stdout else []
+    status = "PASS" if pids else "FAIL"
+    message = f"{process_name} is running" if pids else f"{process_name} is not running"
+    return check(
+        f"{process_name}_process",
+        f"{process_name.upper()} Process",
+        status,
+        message,
+        {"process": process_name, "pids": pids, "error": stderr, "exit_code": code},
+    )
+
+
+def apache_running():
+    stdout, stderr, code = run_command(["systemctl", "is-active", "apache2"])
+    state = stdout if stdout else "unavailable"
+    if code == 0 and state == "active":
+        return check("apache2", "Apache2", "PASS", "apache2.service is active", {"state": state})
+
+    pgrep_out, pgrep_err, pgrep_code = run_command(["pgrep", "-x", "apache2"])
+    pids = [pid for pid in pgrep_out.splitlines() if pid.strip().isdigit()] if pgrep_out else []
+    if pids:
+        return check(
+            "apache2",
+            "Apache2",
+            "PASS",
+            "Apache2 process is running",
+            {"state": state, "pids": pids, "systemd_error": stderr},
+        )
+
+    return check(
+        "apache2",
+        "Apache2",
+        "FAIL",
+        "Apache2 is not running",
+        {"state": state, "systemd_error": stderr, "pgrep_error": pgrep_err, "pgrep_exit_code": pgrep_code},
+    )
+
+
+def file_present(check_id, label, path, missing_status="FAIL"):
+    exists = os.path.exists(path)
+    readable = os.access(path, os.R_OK)
+    if exists and readable:
+        stat = os.stat(path)
+        return check(
+            check_id,
+            label,
+            "PASS",
+            f"{path} is present",
+            {"path": path, "readable": True, "size_bytes": stat.st_size, "mtime": int(stat.st_mtime)},
+        )
+    if exists:
+        return check(check_id, label, "WARN", f"{path} exists but is not readable", {"path": path, "readable": False})
+    return check(check_id, label, missing_status, f"{path} is missing", {"path": path, "readable": False})
+
+
+def xml_freshness():
+    if not os.path.exists(XML_STATUS):
+        return check("xlxd_xml_freshness", "xlxd.xml Freshness", "WARN", f"{XML_STATUS} is missing", {"path": XML_STATUS})
+    if not os.access(XML_STATUS, os.R_OK):
+        return check("xlxd_xml_freshness", "xlxd.xml Freshness", "WARN", f"{XML_STATUS} is not readable", {"path": XML_STATUS})
+
+    mtime = os.stat(XML_STATUS).st_mtime
+    age = max(0, int(time.time() - mtime))
+    details = {
+        "path": XML_STATUS,
+        "age_seconds": age,
+        "mtime": int(mtime),
+        "warn_after_seconds": XML_FRESH_WARN_SECONDS,
+        "fail_after_seconds": XML_FRESH_FAIL_SECONDS,
+    }
+
+    if age <= XML_FRESH_WARN_SECONDS:
+        return check("xlxd_xml_freshness", "xlxd.xml Freshness", "PASS", f"{XML_STATUS} is fresh ({age}s old)", details)
+    if age <= XML_FRESH_FAIL_SECONDS:
+        return check("xlxd_xml_freshness", "xlxd.xml Freshness", "WARN", f"{XML_STATUS} may be stale ({age}s old)", details)
+    return check("xlxd_xml_freshness", "xlxd.xml Freshness", "FAIL", f"{XML_STATUS} is stale ({age}s old)", details)
+
+
+def radioid_record_count():
+    if not os.path.exists(RADIOID_DB):
+        return check("radioid_record_count", "RadioID Record Count", "WARN", f"{RADIOID_DB} is missing", {"path": RADIOID_DB})
+    if not os.access(RADIOID_DB, os.R_OK):
+        return check("radioid_record_count", "RadioID Record Count", "WARN", f"{RADIOID_DB} is not readable", {"path": RADIOID_DB})
+
+    try:
+        with sqlite3.connect(f"file:{RADIOID_DB}?mode=ro", uri=True) as conn:
+            count = conn.execute("SELECT COUNT(*) FROM radioid").fetchone()[0]
+    except sqlite3.Error as exc:
+        return check("radioid_record_count", "RadioID Record Count", "FAIL", "RadioID database query failed", {"path": RADIOID_DB, "error": str(exc)})
+
+    status = "PASS" if count > 0 else "WARN"
+    message = f"{count} RadioID records loaded" if count > 0 else "RadioID database has no records"
+    return check("radioid_record_count", "RadioID Record Count", status, message, {"path": RADIOID_DB, "records": count})
+
+
+def dvsi_count():
+    stdout, stderr, code = run_command(["lsusb"])
+    if code != 0:
+        return check("dvsi_usb_count", "ThumbDV / DVSI USB Devices", "WARN", "Unable to inspect USB devices", {"count": 0, "error": stderr, "exit_code": code})
+
+    count = 0
+    matches = []
+    for line in stdout.splitlines():
+        if re.search(r"0403:6015|DVSI|ThumbDV|Future Technology Devices", line, re.IGNORECASE):
+            count += 1
+            matches.append(line)
+
+    status = "PASS" if count > 0 else "WARN"
+    message = f"{count} ThumbDV / DVSI USB device(s) detected" if count > 0 else "No ThumbDV / DVSI USB devices detected"
+    return check("dvsi_usb_count", "ThumbDV / DVSI USB Devices", status, message, {"count": count, "matches": matches})
+
+
+def udp_ports_from_proc():
+    ports = set()
+    for path in ("/proc/net/udp", "/proc/net/udp6"):
+        try:
+            with open(path, "r", encoding="utf-8") as handle:
+                next(handle, None)
+                for line in handle:
+                    parts = line.split()
+                    if len(parts) > 1 and ":" in parts[1]:
+                        ports.add(int(parts[1].rsplit(":", 1)[1], 16))
+        except (OSError, ValueError):
+            continue
+    return ports
+
+
+def active_udp_ports():
+    stdout, _, code = run_command(["ss", "-H", "-lun"])
+    ports = set()
+    if code == 0 and stdout:
+        for line in stdout.splitlines():
+            fields = line.split()
+            if not fields:
+                continue
+            local = fields[-2] if len(fields) >= 2 else fields[-1]
+            match = re.search(r"[:.](\d+)$", local)
+            if match:
+                ports.add(int(match.group(1)))
+
+    if not ports:
+        ports = udp_ports_from_proc()
+
+    return ports
+
+
+def protocol_checks():
+    ports = active_udp_ports()
+    results = []
+    for check_id, label, port in PROTOCOLS:
+        if port in ports:
+            results.append(check(check_id, label, "PASS", f"UDP {port} is listening", {"port": port, "listening": True}))
+        else:
+            results.append(check(check_id, label, "FAIL", f"UDP {port} is not listening", {"port": port, "listening": False}))
+    return results
+
+
+def build_health():
+    checks = [
+        systemd_state("urfd-tcd.service"),
+        process_running("urfd"),
+        process_running("tcd"),
+        apache_running(),
+        file_present("dashboard_config", "Dashboard Config", DASHBOARD_CONF),
+        file_present("xlxd_xml_present", "xlxd.xml Present", XML_STATUS, missing_status="WARN"),
+        xml_freshness(),
+        file_present("radioid_database", "RadioID Database", RADIOID_DB, missing_status="WARN"),
+        radioid_record_count(),
+        dvsi_count(),
+    ]
+    checks.extend(protocol_checks())
+
+    statuses = [item["status"] for item in checks]
+    if "FAIL" in statuses:
+        overall = "FAIL"
+    elif "WARN" in statuses:
+        overall = "WARN"
+    else:
+        overall = "PASS"
+
+    counts = {status: statuses.count(status) for status in ("PASS", "WARN", "FAIL")}
+    return {"overall": overall, "checks": checks, "counts": counts, "generated_at": int(time.time())}
+
+
+def text_output(health):
+    print(f"Overall: {health['overall']}")
+    counts = health.get("counts", {})
+    print(f"PASS: {counts.get('PASS', 0)}  WARN: {counts.get('WARN', 0)}  FAIL: {counts.get('FAIL', 0)}")
+    print()
+    for item in health["checks"]:
+        print(f"[{item['status']}] {item['label']}: {item['message']}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="URFD native health checks")
+    parser.add_argument("--pretty", action="store_true", help="pretty-print JSON output")
+    parser.add_argument("--text", action="store_true", help="emit human-readable terminal output")
+    args = parser.parse_args()
+
+    health = build_health()
+    if args.text:
+        text_output(health)
+    else:
+        indent = 2 if args.pretty else None
+        print(json.dumps(health, indent=indent, sort_keys=False))
+
+    return 2 if health["overall"] == "FAIL" else 1 if health["overall"] == "WARN" else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
