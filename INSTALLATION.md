@@ -625,6 +625,10 @@ customization.
 
 ## Upgrade Procedure
 
+Before upgrading, back up the configuration files listed in the Backup Planning section of this document.
+
+This preserves your reflector identity, Calling Home hash, dashboard configuration, authentication database, and RadioID data.
+
 Update the repository:
 
 ```sh

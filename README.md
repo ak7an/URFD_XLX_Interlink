@@ -6,8 +6,8 @@ The project combines:
 
 * URFD reflector services
 * XLX reflector interlinking
-* TCD transcoding
-* Dual DVSI ThumbDV support
+* Optional TCD transcoding
+* Optional Dual DVSI ThumbDV support
 * HTTPS Public Dashboard
 * HTTPS Sysop Dashboard
 * RadioID integration
@@ -155,6 +155,24 @@ Expected result:
 ```
 FAIL: 0
 ```
+
+Some WARN entries are expected on a fresh installation.
+
+Examples include:
+
+* HTTPS not yet configured
+* XLX Calling Home disabled
+* RadioID database not yet downloaded
+* No ThumbDV hardware installed
+* Optional custom service controls not configured
+
+The primary validation goal is to achieve:
+
+```
+FAIL: 0
+```
+
+Review any WARN entries to determine whether they apply to your installation.
 
 ---
 
