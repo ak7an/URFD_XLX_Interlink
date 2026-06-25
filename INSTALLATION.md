@@ -57,7 +57,6 @@ For public, continuously operating reflectors.
 - 16 GB or larger storage
 - High-quality SD card or SSD
 - Wired Ethernet connection
-- Powered USB hub when using dual ThumbDV devices
 
 ## Recommended x86 Hardware
 
