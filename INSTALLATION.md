@@ -35,32 +35,51 @@ service-control workflow.
 
 ---
 
-## Platform Support
+## Minimum Requirements
 
-Validated platforms:
+Validated during development.
 
-- Debian 13 x86_64
-- Debian 13 arm64
-- Raspberry Pi 3 running Debian 13 arm64
+- Raspberry Pi 3 (or newer)
+- 1 GB RAM
+- 8 GB SD card
+- Debian 13 or Raspberry Pi OS (64-bit preferred)
+- Internet connection during installation
+- Git installed (installer can install if needed)
 
-Other Debian-family systems, Raspberry Pi OS, Ubuntu-family systems, and Zorin
-OS may work, but they are not the currently validated installation targets.
+This configuration has been successfully validated.
 
----
+## Recommended Production Hardware
 
-## Hardware Requirements
+For public, continuously operating reflectors.
 
-Minimum:
+- Raspberry Pi 4 or Raspberry Pi 5
+- 2 GB RAM or greater
+- 16 GB or larger storage
+- High-quality SD card or SSD
+- Wired Ethernet connection
+- Powered USB hub when using dual ThumbDV devices
 
-- 2 CPU cores
-- 2 GB RAM
-- 20 GB storage
+## Recommended x86 Hardware
+
+For larger public systems.
+
+Examples:
+
+- Dell OptiPlex Micro
+- HP EliteDesk Mini
+- Intel NUC
+- Similar low-power x86_64 systems
 
 Recommended:
 
-- 4 CPU cores
-- 4 GB RAM
+- Dual-core CPU or better
+- 4 GB RAM or greater
 - SSD storage
+
+The minimum requirements represent successfully tested hardware. The
+recommended configurations provide additional performance margin for public
+reflectors, multiple linked protocols, long-term operation, and future
+expansion.
 
 Optional transcoding hardware:
 
