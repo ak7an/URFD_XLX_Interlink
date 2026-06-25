@@ -1,528 +1,5 @@
 # PROJECT_STATE.md
 
-## Current State Summary
-
-URFD_XLX_Interlink is currently a stable, deployable multi-protocol amateur
-radio reflector platform based on URFD. The current project direction is a full
-reflector appliance installer, not just dashboard/support tooling.
-
-Current supported stack:
-
-- URFD reflector services
-- D-Star, DMR, YSF, NXDN, P25, M17, G3
-- XLX reflector interlinking through Brandmeister-style transport handling
-- Optional TCD transcoding with DVSI ThumbDV hardware and FTDI D2XX
-- Custom public dashboard
-- Custom Sysop Dashboard
-- RadioID SQLite lookup subsystem
-- Optional XLX Calling Home directory publishing
-- Native Sysop Dashboard service controls
-- Automated installer and validation tooling
-
-Current production direction:
-
-- Custom dashboard development happens in `dashboard/index.php` and
-  `dashboard/sysop/index.php`.
-- Legacy XLXD/URFD dashboard files remain for compatibility and reference, but
-  are not the primary development target.
-- Native Sysop Dashboard service controls are the supported production service
-  control workflow.
-- Monit was evaluated and validated historically, but is no longer required for
-  the supported service-control workflow.
-- FTDI D2XX and TCD are optional. URFD can operate as a reflector without
-  hardware transcoding.
-- Missing FTDI/TCD components should be WARN, not FAIL, for non-transcoding
-  installs.
-- XLX Calling Home is optional, disabled by default, and sysop controlled.
-
-Current validated platforms:
-
-- Debian 13 x86_64
-- Debian 13 arm64
-- Raspberry Pi 3 Debian 13 arm64
-
-Current full-stack Raspberry Pi validation:
-
-- Raspberry Pi 3
-- Debian 13 trixie arm64
-- Kernel 6.12.x+rpt-rpi-v8
-- URFD build/install validated
-- IMBE vocoder build/install validated
-- FTDI D2XX install validated with `libftd2xx-linux-arm-v8-1.4.35.tgz`
-- TCD build/install validated
-- `urfd-tcd.service` install/start validated
-- Dual ThumbDV detection validated
-- URFD/TCD combined service startup validated
-
-Current known good operational state:
-
-- P25 stable
-- XLX188 linked
-- XLX578 linked
-- TCD operational when FTDI/DVSI hardware is present
-- Dual ThumbDV configuration operational
-- `urfd-tcd.service` operational when transcoding stack is installed
-- HTTPS infrastructure available
-
-## Current Runtime Paths and Services
-
-Core runtime paths:
-
-- `/usr/local/bin/urfd`
-- `/usr/local/bin/tcd`
-- `/usr/local/bin/start-urfd-tcd.sh`
-- `/usr/local/etc/urfd.ini`
-- `/usr/local/etc/urfd.interlink`
-- `/usr/local/etc/urfd.whitelist`
-- `/usr/local/etc/urfd.blacklist`
-- `/usr/local/etc/urfd.terminal`
-- `/usr/local/etc/tcd.ini`
-- `/var/log/xlxd.xml`
-
-Dashboard runtime paths:
-
-- `/var/www/html/urf/urfd`
-- `/etc/urfd-dashboard/dashboard.conf`
-- `/etc/urfd-dashboard/radioid.conf`
-- `/etc/urfd-dashboard/service-controls.conf`
-- `/var/lib/urfd-dashboard/radioid.sqlite`
-- `/var/lib/urfd-dashboard/xlx-reflector-list.xml`
-
-Calling Home runtime paths:
-
-- `/usr/local/bin/urfd-callinghome`
-- `/var/lib/urfd/callinghome.hash`
-- `/var/lib/urfd/lastcallhome`
-- `/var/lib/urfd/callinghome.response`
-
-Service-control runtime paths:
-
-- `/usr/local/bin/urfd-service-control`
-- `/usr/local/bin/urfd-service-config`
-- `/usr/local/bin/urfd-sysop-user`
-- `/etc/sudoers.d/urfd-dashboard-service-control`
-- `/var/log/urfd-dashboard-actions.log`
-- `/etc/apache2/.htpasswd-urfd-sysop`
-
-Systemd units and timers:
-
-- `urfd-tcd.service`
-- `urfd-radioid-update.service`
-- `urfd-radioid-update.timer`
-- `urfd-callinghome.service`
-- `urfd-callinghome.timer`
-
-Dashboard URL note:
-
-- The installed dashboard filesystem path is `/var/www/html/urf/urfd`.
-- The public URL depends on Apache `DocumentRoot` or alias configuration.
-- Fresh install validation checks `/urf/urfd/` and `/urf/urfd/sysop/`.
-- Production notes also record deployments where `/var/www/html/urf/urfd` is the
-  Apache `DocumentRoot`, making the public dashboard `/` and sysop dashboard
-  `/sysop/`.
-
-## Current Core Reflector Architecture
-
-URFD builds from the local `reflector/` source tree and installs as
-`/usr/local/bin/urfd`. The reflector publishes XLXD-compatible runtime XML to
-`/var/log/xlxd.xml`, which is the primary dashboard data source.
-
-Supported protocols:
-
-- D-Star
-- DMR
-- YSF
-- NXDN
-- P25
-- M17
-- G3
-- XLX Interlink
-
-XLX Interlink support:
-
-- `BMProtocol.cpp` was modified so XLX peers defined in `urfd.interlink` can be
-  treated as Brandmeister-transport peers for reconnect handling.
-- The project supports reflector-to-reflector XLX interlinking.
-- The project does not support operating as a BrandMeister DMR master.
-
-P25 stability fix:
-
-- `P25Protocol.cpp` includes packet validation safeguards for invalid offsets,
-  unknown packet types, buffer overruns, and stream termination handling.
-
-TCD and ThumbDV support:
-
-- TCD is optional and requires IMBE vocoder support plus FTDI D2XX.
-- TCD source is cloned from `https://github.com/nostar/tcd.git` beside the URFD
-  source tree.
-- TCD expects the URFD source tree to be available as sibling path `../urfd`.
-- The combined service starts URFD, then starts TCD so TCD can connect to URFD
-  on `127.0.0.1:10100`.
-
-Hardware details preserved from validation:
-
-- ThumbDV serial `D30G37AJ`
-- ThumbDV serial `D30G37BA`
-- Validation recorded one device assigned for D-Star and one for DMR/YSF/NXDN.
-- ThumbDV serial assignments varied during testing and should not be treated as
-  fixed for every deployment.
-
-## Current Installer Architecture
-
-Master installer:
-
-- `install-all.sh`
-
-Current installer flow:
-
-1. `scripts/install-deps.sh`
-2. `scripts/install-urfd.sh`
-3. `scripts/install-imbe-vocoder.sh`
-4. `scripts/install-ftdi-d2xx.sh`
-5. If FTDI D2XX succeeds:
-   - `scripts/install-tcd.sh`
-   - `scripts/install-urfd-tcd-service.sh`
-6. If FTDI D2XX is unavailable, skip TCD and continue.
-7. `scripts/install-dashboard-config.sh`
-8. `scripts/install-dashboard.sh`
-9. `scripts/setup-radioid-db.sh`
-10. `scripts/install-radioid-tools.sh`
-11. `scripts/install-radioid-timer.sh`
-12. `scripts/install-service-controls.sh`
-13. `scripts/install-callinghome-timer.sh`
-14. `scripts/configure-reflector.sh`
-15. `scripts/check-install.sh`
-
-Installer policy:
-
-- FTDI D2XX is proprietary and is not downloaded or redistributed by this
-  project.
-- Sysops who need ThumbDV/TCD support must manually place the correct FTDI D2XX
-  archive beside the repository or in `/tmp` before running the installer.
-- If the archive is absent or invalid, TCD and `urfd-tcd.service` are skipped.
-- The rest of the reflector, dashboard, RadioID, service controls, Calling Home,
-  configurator, and validation flow continues.
-
-Validation policy:
-
-- `scripts/check-install.sh` validates installed components.
-- Missing optional FTDI/TCD items are warnings for non-transcoding installs.
-- Missing `/var/log/xlxd.xml` is a warning when the reflector has not started
-  yet.
-- HTTPS detection may be a warning on fresh non-public deployments.
-
-## Current Dashboard Architecture
-
-The current dashboard is a custom PHP dashboard, separate from legacy XLXD/URFD
-dashboard code.
-
-Primary files:
-
-- `dashboard/index.php`
-- `dashboard/sysop/index.php`
-
-Public Dashboard features:
-
-- Reflector online/stale/offline state
-- Protocol status
-- Linked systems
-- Clickable XLX reflector dashboard URLs when available
-- Last Heard table
-- RadioID operator name lookup
-- QRZ callsign links
-- Linked repeaters / nodes
-- Masked node IP display
-- Recent node activity
-- Optional dashboard logo from `DASHBOARD_LOGO`
-- Automatic browser refresh every 30 seconds
-
-Important dashboard limitation:
-
-- The XML feed does not expose true stream lifecycle information.
-- The dashboard's active stream area is therefore recent node activity, not true
-  stream start/duration reporting.
-
-Sysop Dashboard features:
-
-- URFD/TCD service state
-- URFD and TCD process state
-- Protocol UDP listener state
-- DVSI ThumbDV detection
-- Transcoder readiness
-- Server uptime, load, memory, disk, and CPU temperature
-- XLX Calling Home state
-- Native Start/Stop/Restart controls
-- Custom service controls
-- Ham radio service discovery workflow
-
-Design rationale:
-
-- Do not heavily modify the stock URFD or legacy XLXD dashboard.
-- Preserve compatibility with future URFD updates.
-- Avoid maintaining large modifications against upstream dashboard code.
-- Allow dashboard development without changing reflector packet paths.
-- Keep legacy dashboard files as reference and compatibility material.
-
-## Current RadioID Subsystem
-
-RadioID provides local operator lookup data for dashboard enrichment.
-
-Runtime database:
-
-- `/var/lib/urfd-dashboard/radioid.sqlite`
-
-Schema:
-
-- `dashboard/sql/radioid_schema.sql`
-
-Installed tools:
-
-- `/usr/local/bin/urfd-radioid-import`
-- `/usr/local/bin/urfd-radioid-update`
-
-Configuration:
-
-- `/etc/urfd-dashboard/radioid.conf`
-
-Timer:
-
-- `urfd-radioid-update.service`
-- `urfd-radioid-update.timer`
-
-Supported import formats:
-
-- CSV
-- Semicolon-delimited records
-- Whitespace-delimited `DMRIds.dat` style records
-
-Historical validation details:
-
-- DMR import validated with 322,450 records.
-- NXDN import validated with 16,441 records.
-- Total lookup database validation recorded 338,891 records.
-- AK7AN lookup was validated.
-- K4MMG troubleshooting validated whitespace `DMRIds.dat` operator-name import.
-
-## Current XLX Calling Home Architecture
-
-XLX Calling Home is optional, disabled by default, and sysop controlled.
-
-Publisher:
-
-- `dashboard/bin/urfd-callinghome`
-- Installed as `/usr/local/bin/urfd-callinghome`
-
-Configuration:
-
-- `/etc/urfd-dashboard/dashboard.conf`
-
-State:
-
-- `/var/lib/urfd/callinghome.hash`
-- `/var/lib/urfd/lastcallhome`
-- `/var/lib/urfd/callinghome.response`
-
-Timer:
-
-- `urfd-callinghome.service`
-- `urfd-callinghome.timer`
-- `OnBootSec=2min`
-- `OnUnitActiveSec=10min`
-
-Publisher behavior:
-
-- Reads reflector identity from `urfd.ini`.
-- Reads behavior from `dashboard.conf`.
-- Reads interlink data from `/usr/local/etc/urfd.interlink` by default.
-- Generates XLXD-compatible XML containing:
-  - `<query>CallingHome</query>`
-  - `<reflector>...</reflector>`
-  - `<interlinks>...</interlinks>`
-- Submits to `http://xlxapi.rlx.lu/api.php` by default.
-
-Legacy XLXD migration:
-
-- Installer detects `/xlxd-ch/callinghome.php` when present.
-- Sysop may reuse an existing XLXD Calling Home hash.
-- Reuse preserves XLX directory identity and helps avoid stale listing issues.
-- Hash file permissions are `root:root` and `0600`.
-
-Historical validation:
-
-- Publisher returned `[PASS] XLX Calling Home published: URF277`.
-- Legacy hash migration was validated.
-- Dashboard visibility was validated.
-
-## Current Service Control Architecture
-
-Native Sysop Dashboard service controls are the supported production service
-control workflow.
-
-Monit status:
-
-- Monit was historically installed and validated.
-- Monit was later replaced by native Sysop Dashboard controls.
-- Monit is no longer required for supported production service control.
-- `monit.service` was disabled on production after it restarted URFD/TCD during
-  intentional maintenance stops.
-
-Native control security model:
-
-- Dashboard actions are POST-only.
-- CSRF protection is enforced.
-- Actions are restricted to `start`, `stop`, and `restart`.
-- Services are allowlisted.
-- Dashboard PHP does not run arbitrary shell commands.
-- Privileged work goes through restricted root-owned helpers.
-- Actions are logged to `/var/log/urfd-dashboard-actions.log`.
-
-Core control target:
-
-- Dashboard service value: `urfd-tcd`
-- Systemd unit: `urfd-tcd.service`
-
-Custom controls:
-
-- Config file: `/etc/urfd-dashboard/service-controls.conf`
-- Format:
-
-```ini
-[Display Name]
-service=systemd-unit.service
-```
-
-Service discovery:
-
-- `dashboard/sysop/service-discovery.php`
-- `dashboard/sysop/service-config.php`
-- `/usr/local/bin/urfd-service-config`
-
-User management:
-
-- `/usr/local/bin/urfd-sysop-user`
-- `sudo urfd-sysop-user add USERNAME`
-- `sudo urfd-sysop-user remove USERNAME`
-- `sudo urfd-sysop-user list`
-- Authentication storage: `/etc/apache2/.htpasswd-urfd-sysop`
-
-## Current Troubleshooting Reference
-
-Installer and build issues:
-
-- Missing `nlohmann-json3-dev` caused `nlohmann/json.hpp not found`.
-- Missing `libcurl4-openssl-dev` caused `curl/curl.h not found`.
-- OpenDHT dependency failure occurred when `DHT = true`; DHT is disabled by
-  default for installer deployments.
-- ARM IMBE builds may produce `/usr/local/lib/libimbe_vocoder.a` instead of a
-  shared library. Validation accepts `.a` or `.so`.
-- Bad FTDI downloads may be HTML/403 responses. Installer validates archives
-  with `tar -tzf` before extraction.
-- FTDI D2XX 1.4.35 ARMv8 archive layout required selecting versioned
-  `libftd2xx.so.*` and top-level `ftd2xx.h` / `WinTypes.h`.
-- Fresh default installs rewrite malformed `URF???` and `/home/user` paths in
-  `urfd.ini` to deployment-safe defaults.
-
-Runtime and dashboard issues:
-
-- `/var/log/xlxd.xml` may be missing before reflector startup.
-- RadioID database may exist but have no records if download URLs are blank.
-- Calling Home may be disabled by design.
-- Dashboard URL paths depend on Apache `DocumentRoot` or alias configuration.
-- Native dashboard Stop/Start/Restart is preferred over automatic Monit restart
-  behavior during maintenance.
-
-Resolved defect references:
-
-- DEFECT-011: FTDI D2XX download/redistribution policy.
-- DEFECT-012: FTDI/TCD optional installer handling.
-- DEFECT-015: `install-urfd.sh` used wrong `reflector/urfd.ini` source path.
-- DEFECT-016: `install-urfd.sh` used wrong `reflector/urfd.interlink` source
-  path.
-- DEFECT-017: IMBE validation accepted only `.so`, not `.a`.
-- DEFECT-018: unsafe hash generation pipeline under `set -euo pipefail`.
-- DEFECT-019: FTDI downloads may return HTML/403 instead of an archive.
-- DEFECT-020: obsolete FTDI 1.4.27 archive naming in installer text.
-- DEFECT-021: FTDI D2XX 1.4.35 ARMv8 archive layout handling.
-- DEFECT-022: fresh install left `URF???` and `/home/user` paths in `urfd.ini`.
-
-## Current Known Issues
-
-Current known issues should be kept short and limited to still-relevant items.
-
-- DPlus disconnect/reconnect behavior should continue to be observed.
-- XLX peer reconnect behavior should continue to be monitored.
-- True active stream lifecycle reporting is not currently exposed by the XML
-  feed; dashboard activity display is based on recent node activity.
-- RadioID auto-population policy remains a deployment decision when URLs are
-  blank.
-- HTTPS and Sysop auth validation may need different behavior depending on
-  Apache URL mapping and whether the deployment is public.
-
-## Current Next Priorities
-
-1. Keep current architecture and installation documentation synchronized.
-2. Add or refine sysop-facing troubleshooting documentation.
-3. Decide RadioID auto-population behavior for fresh installs.
-4. Clarify HTTPS and Sysop auth validation policy for fresh non-public installs.
-5. Implement backup/restore tooling.
-6. Consider native URFD XML reporting for true active stream lifecycle data.
-
-## Backup / Restore Roadmap
-
-Backup / restore is planned but not implemented.
-
-Proposed tools:
-
-- `/usr/local/bin/urfd-backup`
-- `/usr/local/bin/urfd-restore`
-
-Backup should preserve:
-
-- `/etc/urfd-dashboard/`
-- `/usr/local/etc/urfd.ini`
-- `/usr/local/etc/urfd.interlink`
-- `/usr/local/etc/urfd.blacklist`
-- `/usr/local/etc/urfd.whitelist`
-- `/var/lib/urfd-dashboard/`
-- `/var/lib/urfd/`
-- Dashboard assets and custom branding
-- Sysop authentication file
-- Service control configuration
-- Calling Home hash and state files
-- Relevant systemd unit overrides if present
-
-Backup should exclude:
-
-- Compiled binaries
-- Git repositories
-- Build directories
-- Logs
-- Temporary cache files
-
-Backup archive format:
-
-- `urfd-backup-YYYY-MM-DD-HHMMSS.tar.gz`
-
-Design principle:
-
-- Backups should preserve identity and customization, not replace the installer
-  or package management.
-
-## Historical Archive
-
-The original chronological project notes are preserved below for history and
-troubleshooting context. Some archived sections contain obsolete planning notes
-or intermediate validation states. The current-state sections above are the
-authoritative handoff summary.
-
-Archive sections include historical release labels such as
-`v0.1-xlx-interlink`; current documentation reflects the latest validated
-release state.
-
-The empty placeholder section `New Checkpoint Title` was intentionally removed.
-
----
-
 ## Project
 
 URFD_XLX_Interlink
@@ -1044,7 +521,7 @@ Planned installation scripts:
 scripts/install-deps.sh
 scripts/install-dashboard.sh
 scripts/setup-radioid-db.sh
-scripts/install-service-controls.sh
+scripts/install-service.sh
 scripts/check-install.sh
 
 Expected dependency coverage:
@@ -1076,6 +553,29 @@ Expected validation coverage:
 Long-term objective:
 
 Reduce installation effort from hours of troubleshooting to a repeatable scripted deployment.
+
+
+---
+
+## New Checkpoint Title
+
+Date:
+2026-06-10
+
+Summary:
+
+- Item
+- Item
+- Item
+
+Status:
+
+Current state here.
+
+Next:
+
+- Next item
+- Next item
 
 
 ---
@@ -1643,7 +1143,7 @@ Important distinction:
 
 The legacy XLXD dashboard files may contain useful configuration references, especially:
 
-    dashboard/pgs/config.inc.php
+    dashboard/pgs/config.php
 
 but they should be treated as reference material, not as the primary development target.
 
@@ -2121,9 +1621,21 @@ Added:
 - scripts/install-tcd.sh
 - scripts/install-urfd-tcd-service.sh
 
-Historical checkpoint recorded the `install-all.sh` flow here. The
-authoritative current installer flow is maintained in `Current Installer
-Architecture` above to avoid duplicated stale entries.
+install-all.sh now runs:
+
+- scripts/install-deps.sh
+- scripts/install-urfd.sh
+- scripts/install-tcd.sh
+- scripts/install-urfd-tcd-service.sh
+- scripts/install-dashboard-config.sh
+- scripts/install-dashboard.sh
+- scripts/setup-radioid-db.sh
+- scripts/install-radioid-tools.sh
+- scripts/install-radioid-timer.sh
+- scripts/install-monit.sh
+- scripts/install-callinghome-timer.sh
+- scripts/configure-reflector.sh
+- scripts/check-install.sh
 
 ### URFD Installer
 
@@ -3643,7 +3155,7 @@ Platform:
 
 - Raspberry Pi 3
 - Debian 13 trixie arm64
-- Kernel 6.12.x+rpt-rpi-v8
+- Kernel 6.18.34+rpt-rpi-v8
 
 Validated:
 
@@ -3726,3 +3238,152 @@ Mitigation:
 Current result:
 
 Fresh Pi full-stack FTDI/TCD/DVSI validation passed after installer fixes.
+
+
+---
+
+## Fresh Pi 3 Full-Stack Validation - PASS
+
+Date: 2026-06-24
+
+Platform:
+
+- Raspberry Pi 3
+- Debian 13 trixie arm64
+- Kernel 6.18.34+rpt-rpi-v8
+
+Repository head tested:
+
+- 61dbfe6 Add root checks to installer scripts
+
+Validation method:
+
+- Fresh Pi image
+- Fresh SSH host key
+- Fresh clone to ~/urfd
+- FTDI D2XX archive placed in /tmp
+- Ran sudo ./install-all.sh
+- No manual installer fixes applied
+
+FTDI archive used:
+
+- /tmp/libftd2xx-linux-arm-v8-1.4.35.tgz
+
+Final runtime validation:
+
+- urfd-tcd.service active running
+- URFD running
+- TCD running
+- Dual ThumbDV detected
+- Hybrid Transcoder started
+- Reflector URF277 started and listening
+- Live XML generated
+- XML status readable and fresh
+
+ThumbDV devices detected:
+
+- D30G37AJ
+- D30G37BA
+
+TCD assignment:
+
+- D30G37AJ configured for D-Star
+- D30G37BA configured for DMR/YSF
+
+Final check-install result with DVSI active:
+
+- PASS: 97
+- WARN: 8
+- FAIL: 0
+
+Remaining WARN items are expected for clean test Pi:
+
+- HTTPS not configured
+- RadioID database not populated yet
+- RadioID download directory not created yet
+- Custom service controls config not present
+
+Open cleanup item:
+
+- RadioID schema warning should be reviewed and either resolved by migration or clarified in check-install output.
+
+Conclusion:
+
+Fresh Pi 3 full-stack deployment validation passed.
+
+Installer is now release-candidate quality for Debian 13 arm64 with FTDI D2XX, TCD, dual ThumbDV, dashboard, RadioID tooling, Calling Home timer, service controls, and validation framework.
+
+
+---
+
+## Fresh Pi 3 Full-Stack Validation - PASS
+
+Date: 2026-06-24
+
+Platform:
+
+- Raspberry Pi 3
+- Debian 13 trixie arm64
+- Kernel 6.18.34+rpt-rpi-v8
+
+Repository head tested:
+
+- 61dbfe6 Add root checks to installer scripts
+
+Validation method:
+
+- Fresh Pi image
+- Fresh SSH host key
+- Fresh clone to ~/urfd
+- FTDI D2XX archive placed in /tmp
+- Ran sudo ./install-all.sh
+- No manual installer fixes applied
+
+FTDI archive used:
+
+- /tmp/libftd2xx-linux-arm-v8-1.4.35.tgz
+
+Final runtime validation:
+
+- urfd-tcd.service active running
+- URFD running
+- TCD running
+- Dual ThumbDV detected
+- Hybrid Transcoder started
+- Reflector URF277 started and listening
+- Live XML generated
+- XML status readable and fresh
+
+ThumbDV devices detected:
+
+- D30G37AJ
+- D30G37BA
+
+TCD assignment:
+
+- D30G37AJ configured for D-Star
+- D30G37BA configured for DMR/YSF
+
+Final check-install result with DVSI active:
+
+- PASS: 97
+- WARN: 8
+- FAIL: 0
+
+Remaining WARN items are expected for clean test Pi:
+
+- HTTPS not configured
+- RadioID database not populated yet
+- RadioID download directory not created yet
+- Custom service controls config not present
+
+Open cleanup item:
+
+- RadioID schema warning should be reviewed and either resolved by migration or clarified in check-install output.
+
+Conclusion:
+
+Fresh Pi 3 full-stack deployment validation passed.
+
+Installer is now release-candidate quality for Debian 13 arm64 with FTDI D2XX, TCD, dual ThumbDV, dashboard, RadioID tooling, Calling Home timer, service controls, and validation framework.
+
