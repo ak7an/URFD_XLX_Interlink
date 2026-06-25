@@ -352,6 +352,10 @@ main{padding:20px 30px 40px 30px;}
 .good{color:#66ff66;font-weight:bold;}
 .warn{color:#ffcc66;font-weight:bold;}
 .bad{color:#ff6666;font-weight:bold;}
+.status-dot{display:inline-block;width:0.7em;height:0.7em;border-radius:50%;margin-right:0.4em;vertical-align:middle;}
+.status-dot.good{background:#66ff66;}
+.status-dot.warn{background:#ffcc66;}
+.status-dot.bad{background:#ff6666;}
 table{border-collapse:collapse;}
 td,th{padding:8px 15px;text-align:left;}
 th{border-bottom:1px solid #2d425c;}
@@ -401,24 +405,24 @@ max-width:360px;
 <table>
 <tr>
 <td>Overall Status</td>
-<td class="<?= health_status_class($health['overall'] ?? 'WARN') ?>"><?= htmlspecialchars($health['overall'] ?? 'WARN') ?></td>
+<td class="<?= health_status_class($health['overall'] ?? 'WARN') ?>"><span class="status-dot <?= health_status_class($health['overall'] ?? 'WARN') ?>"></span><?= htmlspecialchars($health['overall'] ?? 'WARN') ?></td>
 </tr>
 <tr>
 <td>Check Counts</td>
 <td>
-<span class="good">PASS <?= htmlspecialchars((string)($healthCounts['PASS'] ?? 0)) ?></span>
+<span class="good"><span class="status-dot good"></span>PASS <?= htmlspecialchars((string)($healthCounts['PASS'] ?? 0)) ?></span>
 &nbsp;
-<span class="warn">WARN <?= htmlspecialchars((string)($healthCounts['WARN'] ?? 0)) ?></span>
+<span class="warn"><span class="status-dot warn"></span>WARN <?= htmlspecialchars((string)($healthCounts['WARN'] ?? 0)) ?></span>
 &nbsp;
-<span class="bad">FAIL <?= htmlspecialchars((string)($healthCounts['FAIL'] ?? 0)) ?></span>
+<span class="bad"><span class="status-dot bad"></span>FAIL <?= htmlspecialchars((string)($healthCounts['FAIL'] ?? 0)) ?></span>
 </td>
 </tr>
 <?php if (empty($healthProblems)): ?>
-<tr><td>Warnings / Failures</td><td class="good">None</td></tr>
+<tr><td>Warnings / Failures</td><td class="good"><span class="status-dot good"></span>None</td></tr>
 <?php else: ?>
 <?php foreach ($healthProblems as $item): ?>
 <tr>
-<td class="<?= health_status_class($item['status'] ?? 'WARN') ?>"><?= htmlspecialchars(($item['status'] ?? 'WARN') . ' ' . ($item['label'] ?? 'Health Check')) ?></td>
+<td class="<?= health_status_class($item['status'] ?? 'WARN') ?>"><span class="status-dot <?= health_status_class($item['status'] ?? 'WARN') ?>"></span><?= htmlspecialchars(($item['status'] ?? 'WARN') . ' ' . ($item['label'] ?? 'Health Check')) ?></td>
 <td><?= htmlspecialchars($item['message'] ?? '') ?></td>
 </tr>
 <?php endforeach; ?>
